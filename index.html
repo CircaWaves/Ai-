@@ -2,228 +2,286 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
 <title>Vintage Lease Poster Generator</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
 
 <style>
-  *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-  }
 
-  body{
-    font-family:'Noto Sans KR', sans-serif;
-    background:#f3f3f3;
-    display:flex;
-    min-height:100vh;
-    color:#111;
-  }
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:'Noto Sans KR', sans-serif;
+  background:#efefef;
+  color:#111;
+  min-height:100vh;
+}
+
+.wrap{
+  display:grid;
+  grid-template-columns:380px 1fr;
+  min-height:100vh;
+}
+
+/* ---------------- */
+/* LEFT PANEL */
+/* ---------------- */
+
+.panel{
+  background:#fff;
+  border-right:1px solid #ddd;
+  padding:40px;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+
+.panel h1{
+  font-size:28px;
+  font-weight:700;
+  letter-spacing:-1px;
+  margin-bottom:10px;
+}
+
+.field{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.field label{
+  font-size:13px;
+  font-weight:600;
+  color:#666;
+}
+
+.field input,
+.field select{
+  height:52px;
+  border:1px solid #ccc;
+  background:white;
+  padding:0 16px;
+  font-size:16px;
+  outline:none;
+}
+
+.field input:focus,
+.field select:focus{
+  border-color:#111;
+}
+
+button{
+  height:56px;
+  border:none;
+  background:#111;
+  color:white;
+  font-size:15px;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover{
+  opacity:0.92;
+}
+
+.download{
+  background:white;
+  color:#111;
+  border:1px solid #111;
+}
+
+/* ---------------- */
+/* PREVIEW */
+/* ---------------- */
+
+.preview-wrap{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:50px;
+  overflow:auto;
+}
+
+.poster{
+  width:1200px;
+  background:#ffffff;
+  position:relative;
+  overflow:hidden;
+
+  /* vintage subtle texture */
+  background-image:
+    radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+
+  background-size:4px 4px;
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.08);
+}
+
+/* aspect ratio classes */
+
+.poster.ratio-4x3{
+  aspect-ratio:4 / 3;
+}
+
+.poster.ratio-3x4{
+  aspect-ratio:3 / 4;
+}
+
+/* ---------------- */
+/* TYPO */
+/* ---------------- */
+
+.top{
+  position:absolute;
+  top:7%;
+  left:6%;
+}
+
+.title-ko{
+  font-size:clamp(48px, 5vw, 88px);
+  line-height:0.92;
+  font-weight:500;
+  letter-spacing:-4px;
+  color:#111;
+
+  /* vintage */
+  filter:contrast(120%);
+}
+
+.title-en{
+  margin-top:8px;
+  font-size:clamp(48px, 5vw, 88px);
+  line-height:0.92;
+  font-weight:400;
+  letter-spacing:-4px;
+  color:#111;
+}
+
+.subtitle{
+  margin-top:26px;
+  font-size:clamp(16px, 1.2vw, 24px);
+  font-weight:300;
+  letter-spacing:-0.8px;
+  color:#111;
+}
+
+.bottom{
+  position:absolute;
+  left:6%;
+  bottom:7%;
+
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+
+.agency{
+  font-size:clamp(18px, 1.5vw, 28px);
+  font-weight:400;
+  letter-spacing:-1px;
+}
+
+.divider{
+  opacity:0.5;
+  font-size:18px;
+}
+
+.phone{
+  font-size:clamp(18px, 1.5vw, 28px);
+  font-weight:300;
+  letter-spacing:-1px;
+}
+
+/* ---------------- */
+/* MOBILE */
+/* ---------------- */
+
+@media(max-width:1200px){
 
   .wrap{
-    width:100%;
-    display:grid;
-    grid-template-columns:380px 1fr;
+    grid-template-columns:1fr;
   }
-
-  /* LEFT PANEL */
 
   .panel{
-    background:white;
-    padding:40px;
-    border-right:1px solid #ddd;
-    display:flex;
-    flex-direction:column;
-    gap:24px;
+    border-right:none;
+    border-bottom:1px solid #ddd;
   }
-
-  .panel h1{
-    font-size:28px;
-    font-weight:700;
-    letter-spacing:-1px;
-  }
-
-  .field{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-
-  .field label{
-    font-size:13px;
-    font-weight:600;
-    color:#555;
-  }
-
-  .field input{
-    height:52px;
-    border:1px solid #ccc;
-    padding:0 16px;
-    font-size:16px;
-    outline:none;
-  }
-
-  .field input:focus{
-    border-color:#111;
-  }
-
-  button{
-    height:56px;
-    border:none;
-    background:#111;
-    color:white;
-    font-size:15px;
-    cursor:pointer;
-    transition:0.2s;
-  }
-
-  button:hover{
-    opacity:0.9;
-  }
-
-  .download{
-    background:white;
-    color:#111;
-    border:1px solid #111;
-  }
-
-  /* POSTER */
 
   .preview-wrap{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:40px;
+    padding:20px;
   }
 
   .poster{
-    width:1200px;
-    aspect-ratio:4/3;
-    background:#ffffff;
-    position:relative;
-    overflow:hidden;
-    padding:72px;
-
-    /* vintage texture */
-    background-image:
-      radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
-    background-size:4px 4px;
+    width:100%;
+    min-width:700px;
   }
 
-  .top{
-    position:absolute;
-    top:72px;
-    left:72px;
-  }
-
-  .title-ko{
-    font-size:72px;
-    line-height:0.95;
-    font-weight:500;
-    letter-spacing:-4px;
-    color:#111;
-
-    /* vintage */
-    filter:contrast(120%);
-  }
-
-  .title-en{
-    margin-top:8px;
-    font-size:72px;
-    line-height:0.95;
-    font-weight:400;
-    letter-spacing:-4px;
-    color:#111;
-  }
-
-  .subtitle{
-    margin-top:26px;
-    font-size:22px;
-    font-weight:300;
-    letter-spacing:-0.5px;
-    color:#111;
-  }
-
-  .bottom{
-    position:absolute;
-    left:72px;
-    bottom:64px;
-
-    display:flex;
-    gap:24px;
-    align-items:center;
-  }
-
-  .agency{
-    font-size:24px;
-    font-weight:400;
-    letter-spacing:-0.8px;
-  }
-
-  .divider{
-    font-size:20px;
-    opacity:0.5;
-  }
-
-  .phone{
-    font-size:24px;
-    font-weight:300;
-    letter-spacing:-0.8px;
-  }
-
-  /* responsive */
-
-  @media(max-width:1200px){
-
-    .wrap{
-      grid-template-columns:1fr;
-    }
-
-    .panel{
-      border-right:none;
-      border-bottom:1px solid #ddd;
-    }
-
-    .preview-wrap{
-      overflow:auto;
-    }
-
-    .poster{
-      width:100%;
-      min-width:900px;
-    }
-  }
+}
 
 </style>
 </head>
+
 <body>
 
 <div class="wrap">
 
-  <!-- LEFT -->
+  <!-- LEFT PANEL -->
+
   <div class="panel">
 
     <h1>임대 포스터 생성기</h1>
 
     <div class="field">
       <label>특이사항 (subtitle)</label>
-      <input id="subtitleInput"
-        value="보증금 조절 가능, 즉시 입주" />
+      <input
+        type="text"
+        id="subtitleInput"
+        value="보증금 조절 가능, 즉시 입주"
+      />
     </div>
 
     <div class="field">
       <label>공인중개사 이름</label>
-      <input id="agencyInput"
-        value="대박공인중개사" />
+      <input
+        type="text"
+        id="agencyInput"
+        value="대박공인중개사"
+      />
     </div>
 
     <div class="field">
       <label>연락처</label>
-      <input id="phoneInput"
-        value="010-9876-5432" />
+      <input
+        type="text"
+        id="phoneInput"
+        value="010-9876-5432"
+      />
+    </div>
+
+    <!-- aspect ratio -->
+
+    <div class="field">
+      <label>포스터 비율</label>
+
+      <select id="ratioSelect">
+
+        <option value="4x3">
+          4:3 (가로형)
+        </option>
+
+        <option value="3x4">
+          3:4 (세로형)
+        </option>
+
+      </select>
     </div>
 
     <button onclick="updatePoster()">
@@ -236,30 +294,42 @@
 
   </div>
 
-  <!-- RIGHT -->
+  <!-- PREVIEW -->
+
   <div class="preview-wrap">
 
-    <div class="poster" id="poster">
+    <div class="poster ratio-4x3" id="poster">
 
       <div class="top">
-        <div class="title-ko">임대</div>
-        <div class="title-en">FOR LEASE</div>
+
+        <div class="title-ko">
+          임대
+        </div>
+
+        <div class="title-en">
+          FOR LEASE
+        </div>
 
         <div class="subtitle" id="subtitle">
           보증금 조절 가능, 즉시 입주
         </div>
+
       </div>
 
       <div class="bottom">
+
         <div class="agency" id="agency">
           대박공인중개사
         </div>
 
-        <div class="divider">|</div>
+        <div class="divider">
+          |
+        </div>
 
         <div class="phone" id="phone">
           010-9876-5432
         </div>
+
       </div>
 
     </div>
@@ -272,6 +342,10 @@
 
 <script>
 
+/* ---------------- */
+/* UPDATE POSTER */
+/* ---------------- */
+
 function updatePoster(){
 
   document.getElementById('subtitle').innerText =
@@ -282,24 +356,66 @@ function updatePoster(){
 
   document.getElementById('phone').innerText =
     document.getElementById('phoneInput').value;
+
+  updateRatio();
 }
+
+/* ---------------- */
+/* UPDATE RATIO */
+/* ---------------- */
+
+function updateRatio(){
+
+  const poster =
+    document.getElementById('poster');
+
+  const ratio =
+    document.getElementById('ratioSelect').value;
+
+  poster.classList.remove('ratio-4x3');
+  poster.classList.remove('ratio-3x4');
+
+  if(ratio === '4x3'){
+    poster.classList.add('ratio-4x3');
+  }
+
+  if(ratio === '3x4'){
+    poster.classList.add('ratio-3x4');
+  }
+}
+
+/* ---------------- */
+/* DOWNLOAD */
+/* ---------------- */
 
 async function downloadPoster(){
 
-  const poster = document.getElementById('poster');
+  const poster =
+    document.getElementById('poster');
 
-  const canvas = await html2canvas(poster,{
-    scale:2,
-    backgroundColor:'#ffffff'
-  });
+  const canvas = await html2canvas(
+    poster,
+    {
+      scale:2,
+      backgroundColor:'#ffffff'
+    }
+  );
 
-  const link = document.createElement('a');
+  const link =
+    document.createElement('a');
 
-  link.download = 'lease-poster.png';
-  link.href = canvas.toDataURL('image/png');
+  link.download =
+    'lease-poster.png';
+
+  link.href =
+    canvas.toDataURL('image/png');
 
   link.click();
 }
+
+/* init */
+
+updatePoster();
 
 </script>
 
