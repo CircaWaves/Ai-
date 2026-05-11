@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vintage Lease Poster Generator</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+<style>
+  *{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+  }
+
+  body{
+    font-family:'Noto Sans KR', sans-serif;
+    background:#f3f3f3;
+    display:flex;
+    min-height:100vh;
+    color:#111;
+  }
+
+  .wrap{
+    width:100%;
+    display:grid;
+    grid-template-columns:380px 1fr;
+  }
+
+  /* LEFT PANEL */
+
+  .panel{
+    background:white;
+    padding:40px;
+    border-right:1px solid #ddd;
+    display:flex;
+    flex-direction:column;
+    gap:24px;
+  }
+
+  .panel h1{
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:-1px;
+  }
+
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+
+  .field label{
+    font-size:13px;
+    font-weight:600;
+    color:#555;
+  }
+
+  .field input{
+    height:52px;
+    border:1px solid #ccc;
+    padding:0 16px;
+    font-size:16px;
+    outline:none;
+  }
+
+  .field input:focus{
+    border-color:#111;
+  }
+
+  button{
+    height:56px;
+    border:none;
+    background:#111;
+    color:white;
+    font-size:15px;
+    cursor:pointer;
+    transition:0.2s;
+  }
+
+  button:hover{
+    opacity:0.9;
+  }
+
+  .download{
+    background:white;
+    color:#111;
+    border:1px solid #111;
+  }
+
+  /* POSTER */
+
+  .preview-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:40px;
+  }
+
+  .poster{
+    width:1200px;
+    aspect-ratio:4/3;
+    background:#ffffff;
+    position:relative;
+    overflow:hidden;
+    padding:72px;
+
+    /* vintage texture */
+    background-image:
+      radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
+    background-size:4px 4px;
+  }
+
+  .top{
+    position:absolute;
+    top:72px;
+    left:72px;
+  }
+
+  .title-ko{
+    font-size:72px;
+    line-height:0.95;
+    font-weight:500;
+    letter-spacing:-4px;
+    color:#111;
+
+    /* vintage */
+    filter:contrast(120%);
+  }
+
+  .title-en{
+    margin-top:8px;
+    font-size:72px;
+    line-height:0.95;
+    font-weight:400;
+    letter-spacing:-4px;
+    color:#111;
+  }
+
+  .subtitle{
+    margin-top:26px;
+    font-size:22px;
+    font-weight:300;
+    letter-spacing:-0.5px;
+    color:#111;
+  }
+
+  .bottom{
+    position:absolute;
+    left:72px;
+    bottom:64px;
+
+    display:flex;
+    gap:24px;
+    align-items:center;
+  }
+
+  .agency{
+    font-size:24px;
+    font-weight:400;
+    letter-spacing:-0.8px;
+  }
+
+  .divider{
+    font-size:20px;
+    opacity:0.5;
+  }
+
+  .phone{
+    font-size:24px;
+    font-weight:300;
+    letter-spacing:-0.8px;
+  }
+
+  /* responsive */
+
+  @media(max-width:1200px){
+
+    .wrap{
+      grid-template-columns:1fr;
+    }
+
+    .panel{
+      border-right:none;
+      border-bottom:1px solid #ddd;
+    }
+
+    .preview-wrap{
+      overflow:auto;
+    }
+
+    .poster{
+      width:100%;
+      min-width:900px;
+    }
+  }
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- LEFT -->
+  <div class="panel">
+
+    <h1>임대 포스터 생성기</h1>
+
+    <div class="field">
+      <label>특이사항 (subtitle)</label>
+      <input id="subtitleInput"
+        value="보증금 조절 가능, 즉시 입주" />
+    </div>
+
+    <div class="field">
+      <label>공인중개사 이름</label>
+      <input id="agencyInput"
+        value="대박공인중개사" />
+    </div>
+
+    <div class="field">
+      <label>연락처</label>
+      <input id="phoneInput"
+        value="010-9876-5432" />
+    </div>
+
+    <button onclick="updatePoster()">
+      포스터 생성
+    </button>
+
+    <button class="download" onclick="downloadPoster()">
+      PNG 다운로드
+    </button>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="preview-wrap">
+
+    <div class="poster" id="poster">
+
+      <div class="top">
+        <div class="title-ko">임대</div>
+        <div class="title-en">FOR LEASE</div>
+
+        <div class="subtitle" id="subtitle">
+          보증금 조절 가능, 즉시 입주
+        </div>
+      </div>
+
+      <div class="bottom">
+        <div class="agency" id="agency">
+          대박공인중개사
+        </div>
+
+        <div class="divider">|</div>
+
+        <div class="phone" id="phone">
+          010-9876-5432
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+<script>
+
+function updatePoster(){
+
+  document.getElementById('subtitle').innerText =
+    document.getElementById('subtitleInput').value;
+
+  document.getElementById('agency').innerText =
+    document.getElementById('agencyInput').value;
+
+  document.getElementById('phone').innerText =
+    document.getElementById('phoneInput').value;
+}
+
+async function downloadPoster(){
+
+  const poster = document.getElementById('poster');
+
+  const canvas = await html2canvas(poster,{
+    scale:2,
+    backgroundColor:'#ffffff'
+  });
+
+  const link = document.createElement('a');
+
+  link.download = 'lease-poster.png';
+  link.href = canvas.toDataURL('image/png');
+
+  link.click();
+}
+
+</script>
+
+</body>
+</html>
