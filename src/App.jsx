@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
-import { Download, RefreshCw } from "lucide-react";
+import { Download, LoaderCircle, RefreshCw, Search } from "lucide-react";
+import { analyzeLease, variablesToPosterValues } from "./services/analyzeLease.service";
 
 const DEFAULTS = {
   mainHeadline: "임대",
@@ -266,6 +267,20 @@ export default function App() {
   const [values, setValues] = useState(DEFAULTS);
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [scale, setScale] = useState(2);
+  const [leaseInput, setLeaseInput] = useState({
+    address: "부산광역시 금정구 장전동 부산대 대학로",
+    floor: "1층",
+    areaPyeong: 18,
+    deposit: "협의",
+    monthlyRent: "협의",
+    premium: "",
+    agencyName: DEFAULTS.agencyName,
+    phoneNumber: DEFAULTS.phoneNumber,
+    memo: "",
+  });
+  const [analysis, setAnalysis] = useState(null);
+  const [analysisError, setAnalysisError] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const safeFontColor = getSafeColor(values.fontColor);
 
@@ -301,8 +316,40 @@ export default function App() {
     setValues((prev) => ({ ...prev, [key]: value }));
   };
 
+  const updateLeaseInput = (key, value) => {
+    setLeaseInput((prev) => ({ ...prev, [key]: value }));
+  };
+
   const reset = () => {
     setValues(DEFAULTS);
+  };
+
+  const runAnalysis = async () => {
+    setIsAnalyzing(true);
+    setAnalysisError("");
+
+    try {
+      const result = await analyzeLease(leaseInput);
+
+      if (!result.ok) {
+        setAnalysis(null);
+        setAnalysisError(result.message);
+        return;
+      }
+
+      setAnalysis(result);
+      setValues((prev) => ({
+        ...prev,
+        ...variablesToPosterValues(result.result.variables),
+      }));
+    } catch (error) {
+      setAnalysis(null);
+      setAnalysisError(
+        error instanceof Error ? error.message : "상권분석 생성 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const exportSvg = () => {
@@ -377,6 +424,116 @@ export default function App() {
           </div>
 
           <div className="space-y-4">
+            <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
+              <div className="mb-3">
+                <h2 className="text-sm font-semibold text-neutral-900">
+                  부산대 대학로 임대 분석
+                </h2>
+                <p className="mt-1 text-xs leading-5 text-neutral-500">
+                  주소와 임대 조건을 넣으면 상권 규칙으로 포스터 문구를 채웁니다.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                    주소
+                  </span>
+                  <input
+                    value={leaseInput.address}
+                    onChange={(e) => updateLeaseInput("address", e.target.value)}
+                    className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    placeholder="부산광역시 금정구 장전동 ..."
+                  />
+                </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      층수
+                    </span>
+                    <input
+                      value={leaseInput.floor}
+                      onChange={(e) => updateLeaseInput("floor", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      면적
+                    </span>
+                    <input
+                      value={leaseInput.areaPyeong}
+                      onChange={(e) => updateLeaseInput("areaPyeong", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      inputMode="decimal"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      보증금
+                    </span>
+                    <input
+                      value={leaseInput.deposit}
+                      onChange={(e) => updateLeaseInput("deposit", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      월세
+                    </span>
+                    <input
+                      value={leaseInput.monthlyRent}
+                      onChange={(e) => updateLeaseInput("monthlyRent", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+                </div>
+
+                <button
+                  onClick={runAnalysis}
+                  disabled={isAnalyzing}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  type="button"
+                >
+                  {isAnalyzing ? (
+                    <LoaderCircle className="animate-spin" size={17} />
+                  ) : (
+                    <Search size={17} />
+                  )}
+                  분석해서 포스터 반영
+                </button>
+
+                {analysisError ? (
+                  <p className="rounded-2xl bg-white px-3 py-2 text-xs leading-5 text-red-600">
+                    {analysisError}
+                  </p>
+                ) : null}
+
+                {analysis ? (
+                  <div className="rounded-2xl bg-white px-3 py-2 text-xs leading-5 text-neutral-600">
+                    <div className="font-semibold text-neutral-900">
+                      {analysis.tradeArea.areaLabel} · 중심부에서{" "}
+                      {analysis.tradeArea.distanceFromCenter}m
+                    </div>
+                    <div>
+                      250m 업종:{" "}
+                      {analysis.rawAnalysis.snapshots
+                        .find((snapshot) => snapshot.radiusMeters === 250)
+                        ?.topCategories.map((item) => item.category)
+                        .join(", ") || "데이터 부족"}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+
             {FIELD_LABELS.map(([key, label]) => (
               <label key={key} className="block">
                 <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
