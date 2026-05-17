@@ -1,425 +1,447 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+import React, { useEffect, useMemo, useState } from "react";
+import QRCode from "qrcode";
+import { Download, RefreshCw } from "lucide-react";
 
-<title>Vintage Lease Poster Generator</title>
+const DEFAULTS = {
+  mainHeadline: "임대",
+  englishHeadline: "FOR LEASE",
+  locationLine: "부산대 지하철역 앞",
+  trafficFeatureLine: "무권리 공실",
+  accessLine: "부산대역 인근",
+  recommendedBusinessLine: "사무실 · 소형 업무공간 추천",
+  leaseConditionLine: "보증금 1,000만원 · 월차임 70만원",
+  agencyName: "원상가 지니부동산",
+  phoneNumber: "010-4117-6994",
+  ctaLine: "임대 문의 / 현장 확인 가능",
+  fontColor: "#0033D9",
+};
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+const FIELD_LABELS = [
+  ["mainHeadline", "메인 헤드라인"],
+  ["englishHeadline", "영문 헤드라인"],
+  ["locationLine", "위치 문구"],
+  ["trafficFeatureLine", "특징 문구"],
+  ["accessLine", "접근성 문구"],
+  ["recommendedBusinessLine", "추천 업종"],
+  ["leaseConditionLine", "임대 조건"],
+  ["agencyName", "부동산명"],
+  ["phoneNumber", "전화번호"],
+  ["ctaLine", "CTA 문구"],
+];
 
-<style>
+const ARTBOARD = { width: 1200, height: 900 };
+const GRID = { x: 40, y: 36, width: 1120, height: 820, columns: 10, rows: 9 };
 
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+const POSITIONS = {
+  mainHeadline: { x: 54, y: 176, size: 166, weight: 900, tracking: -9 },
+  englishHeadline: { x: 54, y: 290, size: 84, weight: 900, tracking: -3.5 },
+  locationLine: { x: 54, y: 406, size: 36, weight: 800, tracking: -1.8 },
+  trafficFeatureLine: { x: 54, y: 450, size: 36, weight: 800, tracking: -1.8 },
+  accessLine: { x: 54, y: 494, size: 36, weight: 800, tracking: -1.8 },
+  recommendedBusinessLine: { x: 54, y: 566, size: 34, weight: 800, tracking: -1.6 },
+  leaseConditionLine: { x: 54, y: 632, size: 34, weight: 800, tracking: -1.6 },
+  agencyName: { x: 54, y: 724, size: 46, weight: 900, tracking: -3.2 },
+  phoneNumber: { x: 54, y: 790, size: 60, weight: 900, tracking: -2.2 },
+  ctaLine: { x: 54, y: 852, size: 28, weight: 800, tracking: -1.3 },
+};
+
+const QR = {
+  boxX: 1026,
+  boxY: 724,
+  boxSize: 132,
+  imageX: 1030,
+  imageY: 728,
+  imageSize: 124,
+};
+
+function escapeXml(value = "") {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
 }
 
-body{
-  font-family:'Noto Sans KR', sans-serif;
-  background:#efefef;
-  color:#111;
-  min-height:100vh;
-}
+function phoneToTelUri(phone = "") {
+  const digits = phone.replace(/[^0-9]/g, "");
 
-.wrap{
-  display:grid;
-  grid-template-columns:380px 1fr;
-  min-height:100vh;
-}
-
-/* ---------------- */
-/* LEFT PANEL */
-/* ---------------- */
-
-.panel{
-  background:#fff;
-  border-right:1px solid #ddd;
-  padding:40px;
-  display:flex;
-  flex-direction:column;
-  gap:22px;
-}
-
-.panel h1{
-  font-size:28px;
-  font-weight:700;
-  letter-spacing:-1px;
-  margin-bottom:10px;
-}
-
-.field{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.field label{
-  font-size:13px;
-  font-weight:600;
-  color:#666;
-}
-
-.field input,
-.field select{
-  height:52px;
-  border:1px solid #ccc;
-  background:white;
-  padding:0 16px;
-  font-size:16px;
-  outline:none;
-}
-
-.field input:focus,
-.field select:focus{
-  border-color:#111;
-}
-
-button{
-  height:56px;
-  border:none;
-  background:#111;
-  color:white;
-  font-size:15px;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-button:hover{
-  opacity:0.92;
-}
-
-.download{
-  background:white;
-  color:#111;
-  border:1px solid #111;
-}
-
-/* ---------------- */
-/* PREVIEW */
-/* ---------------- */
-
-.preview-wrap{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:50px;
-  overflow:auto;
-}
-
-.poster{
-  width:1200px;
-  background:#ffffff;
-  position:relative;
-  overflow:hidden;
-
-  /* vintage subtle texture */
-  background-image:
-    radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px);
-
-  background-size:4px 4px;
-
-  box-shadow:
-    0 20px 60px rgba(0,0,0,0.08);
-}
-
-/* aspect ratio classes (Padding Trick 적용) */
-
-.poster.ratio-4x3{
-  /* 3 / 4 = 0.75 */
-  padding-bottom: 75%;
-}
-
-.poster.ratio-3x4{
-  /* 4 / 3 = 1.333333 */
-  padding-bottom: 133.333%;
-}
-
-/* ---------------- */
-/* TYPO */
-/* ---------------- */
-
-.top{
-  position:absolute;
-  top:7%;
-  left:6%;
-}
-
-.title-ko{
-  font-size:clamp(48px, 5vw, 88px);
-  line-height:0.92;
-  font-weight:500;
-  letter-spacing:-4px;
-  color:#111;
-
-  /* vintage */
-  filter:contrast(120%);
-}
-
-.title-en{
-  margin-top:8px;
-  font-size:clamp(48px, 5vw, 88px);
-  line-height:0.92;
-  font-weight:400;
-  letter-spacing:-4px;
-  color:#111;
-}
-
-.subtitle{
-  margin-top:26px;
-  font-size:clamp(16px, 1.2vw, 24px);
-  font-weight:300;
-  letter-spacing:-0.8px;
-  color:#111;
-}
-
-.bottom{
-  position:absolute;
-  left:6%;
-  bottom:7%;
-
-  display:flex;
-  align-items:center;
-  gap:24px;
-}
-
-.agency{
-  font-size:clamp(18px, 1.5vw, 28px);
-  font-weight:400;
-  letter-spacing:-1px;
-}
-
-.divider{
-  opacity:0.5;
-  font-size:18px;
-}
-
-.phone{
-  font-size:clamp(18px, 1.5vw, 28px);
-  font-weight:300;
-  letter-spacing:-1px;
-}
-
-/* ---------------- */
-/* MOBILE */
-/* ---------------- */
-
-@media(max-width:1200px){
-
-  .wrap{
-    grid-template-columns:1fr;
+  if (digits.startsWith("010")) {
+    return `tel:+82${digits.slice(1)}`;
   }
 
-  .panel{
-    border-right:none;
-    border-bottom:1px solid #ddd;
-  }
-
-  .preview-wrap{
-    padding:20px;
-  }
-
-  .poster{
-    width:100%;
-    min-width:700px;
-  }
-
+  return `tel:${digits || phone}`;
 }
 
-</style>
-</head>
+function makeGridLines() {
+  const lines = [];
+  const x0 = GRID.x;
+  const y0 = GRID.y;
+  const w = GRID.width;
+  const h = GRID.height;
+  const columns = GRID.columns;
+  const rows = GRID.rows;
 
-<body>
-
-<div class="wrap">
-
-  <!-- LEFT PANEL -->
-
-  <div class="panel">
-
-    <h1>임대 포스터 생성기</h1>
-
-    <div class="field">
-      <label>특이사항 (subtitle)</label>
-      <input
-        type="text"
-        id="subtitleInput"
-        value="보증금 조절 가능, 즉시 입주"
-      />
-    </div>
-
-    <div class="field">
-      <label>공인중개사 이름</label>
-      <input
-        type="text"
-        id="agencyInput"
-        value="대박공인중개사"
-      />
-    </div>
-
-    <div class="field">
-      <label>연락처</label>
-      <input
-        type="text"
-        id="phoneInput"
-        value="010-9876-5432"
-      />
-    </div>
-
-    <!-- aspect ratio -->
-
-    <div class="field">
-      <label>포스터 비율</label>
-
-      <select id="ratioSelect">
-
-        <option value="4x3">
-          4:3 (가로형)
-        </option>
-
-        <option value="3x4">
-          3:4 (세로형)
-        </option>
-
-      </select>
-    </div>
-
-    <button onclick="updatePoster()">
-      포스터 생성
-    </button>
-
-    <button class="download" onclick="downloadPoster()">
-      PNG 다운로드
-    </button>
-
-  </div>
-
-  <!-- PREVIEW -->
-
-  <div class="preview-wrap">
-
-    <div class="poster ratio-4x3" id="poster">
-
-      <div class="top">
-
-        <div class="title-ko">
-          임대
-        </div>
-
-        <div class="title-en">
-          FOR LEASE
-        </div>
-
-        <div class="subtitle" id="subtitle">
-          보증금 조절 가능, 즉시 입주
-        </div>
-
-      </div>
-
-      <div class="bottom">
-
-        <div class="agency" id="agency">
-          대박공인중개사
-        </div>
-
-        <div class="divider">
-          |
-        </div>
-
-        <div class="phone" id="phone">
-          010-9876-5432
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
-<script>
-
-/* ---------------- */
-/* UPDATE POSTER */
-/* ---------------- */
-
-function updatePoster(){
-
-  document.getElementById('subtitle').innerText =
-    document.getElementById('subtitleInput').value;
-
-  document.getElementById('agency').innerText =
-    document.getElementById('agencyInput').value;
-
-  document.getElementById('phone').innerText =
-    document.getElementById('phoneInput').value;
-
-  updateRatio();
-}
-
-/* ---------------- */
-/* UPDATE RATIO */
-/* ---------------- */
-
-function updateRatio(){
-
-  const poster =
-    document.getElementById('poster');
-
-  const ratio =
-    document.getElementById('ratioSelect').value;
-
-  poster.classList.remove('ratio-4x3');
-  poster.classList.remove('ratio-3x4');
-
-  if(ratio === '4x3'){
-    poster.classList.add('ratio-4x3');
+  for (let i = 0; i <= columns; i += 1) {
+    const x = x0 + (w / columns) * i;
+    lines.push(<line key={`v-${i}`} x1={x} y1={y0} x2={x} y2={y0 + h} />);
   }
 
-  if(ratio === '3x4'){
-    poster.classList.add('ratio-3x4');
+  for (let i = 0; i <= rows; i += 1) {
+    const y = y0 + (h / rows) * i;
+    lines.push(<line key={`h-${i}`} x1={x0} y1={y} x2={x0 + w} y2={y} />);
   }
+
+  return lines;
 }
 
-/* ---------------- */
-/* DOWNLOAD */
-/* ---------------- */
+function PosterText({ id, value }) {
+  const p = POSITIONS[id];
 
-async function downloadPoster(){
+  if (!p) return null;
 
-  const poster =
-    document.getElementById('poster');
-
-  const canvas = await html2canvas(
-    poster,
-    {
-      scale:2,
-      backgroundColor:'#ffffff'
-    }
+  return (
+    <text
+      x={p.x}
+      y={p.y}
+      fontSize={p.size}
+      fontWeight={p.weight}
+      letterSpacing={p.tracking}
+    >
+      {value}
+    </text>
   );
-
-  const link =
-    document.createElement('a');
-
-  link.download =
-    'lease-poster.png';
-
-  link.href =
-    canvas.toDataURL('image/png');
-
-  link.click();
 }
 
-/* init */
+function PosterSvg({ values, qrDataUrl }) {
+  const blue = values.fontColor || DEFAULTS.fontColor;
+  const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
 
-updatePoster();
+  return (
+    <svg
+      id="lease-poster-svg"
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      viewBox={`0 0 ${ARTBOARD.width} ${ARTBOARD.height}`}
+      role="img"
+      aria-label="임대 포스터 미리보기"
+      style={{ display: "block", background: "#fbfaf6" }}
+    >
+      <rect width={ARTBOARD.width} height={ARTBOARD.height} fill="#fbfaf6" />
 
-</script>
+      <g stroke="#d9d9d4" strokeWidth="1" opacity="0.9">
+        {makeGridLines()}
+      </g>
 
-</body>
-</html>
+      <g fill={blue} fontFamily={font} textAnchor="start">
+        <PosterText id="mainHeadline" value={values.mainHeadline} />
+        <PosterText id="englishHeadline" value={values.englishHeadline} />
+        <PosterText id="locationLine" value={values.locationLine} />
+        <PosterText id="trafficFeatureLine" value={values.trafficFeatureLine} />
+        <PosterText id="accessLine" value={values.accessLine} />
+        <PosterText id="recommendedBusinessLine" value={values.recommendedBusinessLine} />
+        <PosterText id="leaseConditionLine" value={values.leaseConditionLine} />
+        <PosterText id="agencyName" value={values.agencyName} />
+        <PosterText id="phoneNumber" value={values.phoneNumber} />
+        <PosterText id="ctaLine" value={values.ctaLine} />
+      </g>
+
+      {qrDataUrl ? (
+        <g>
+          <rect x={QR.boxX} y={QR.boxY} width={QR.boxSize} height={QR.boxSize} fill="#fbfaf6" />
+          <image
+            href={qrDataUrl}
+            x={QR.imageX}
+            y={QR.imageY}
+            width={QR.imageSize}
+            height={QR.imageSize}
+            preserveAspectRatio="xMidYMid meet"
+          />
+        </g>
+      ) : null}
+    </svg>
+  );
+}
+
+function buildGridSvgMarkup() {
+  const grid = [];
+  const x0 = GRID.x;
+  const y0 = GRID.y;
+  const w = GRID.width;
+  const h = GRID.height;
+  const columns = GRID.columns;
+  const rows = GRID.rows;
+
+  for (let i = 0; i <= columns; i += 1) {
+    const x = x0 + (w / columns) * i;
+    grid.push(`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y0 + h}"/>`);
+  }
+
+  for (let i = 0; i <= rows; i += 1) {
+    const y = y0 + (h / rows) * i;
+    grid.push(`<line x1="${x0}" y1="${y}" x2="${x0 + w}" y2="${y}"/>`);
+  }
+
+  return grid.join("");
+}
+
+function buildTextSvgMarkup(id, text) {
+  const p = POSITIONS[id];
+
+  if (!p) return "";
+
+  return `<text x="${p.x}" y="${p.y}" font-size="${p.size}" font-weight="${p.weight}" letter-spacing="${p.tracking}">${escapeXml(text)}</text>`;
+}
+
+function buildStandaloneSvg(values, qrDataUrl) {
+  const blue = values.fontColor || DEFAULTS.fontColor;
+  const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
+
+  const textMarkup = [
+    buildTextSvgMarkup("mainHeadline", values.mainHeadline),
+    buildTextSvgMarkup("englishHeadline", values.englishHeadline),
+    buildTextSvgMarkup("locationLine", values.locationLine),
+    buildTextSvgMarkup("trafficFeatureLine", values.trafficFeatureLine),
+    buildTextSvgMarkup("accessLine", values.accessLine),
+    buildTextSvgMarkup("recommendedBusinessLine", values.recommendedBusinessLine),
+    buildTextSvgMarkup("leaseConditionLine", values.leaseConditionLine),
+    buildTextSvgMarkup("agencyName", values.agencyName),
+    buildTextSvgMarkup("phoneNumber", values.phoneNumber),
+    buildTextSvgMarkup("ctaLine", values.ctaLine),
+  ].join("\n    ");
+
+  const qrMarkup = qrDataUrl
+    ? `<g><rect x="${QR.boxX}" y="${QR.boxY}" width="${QR.boxSize}" height="${QR.boxSize}" fill="#fbfaf6"/><image href="${qrDataUrl}" x="${QR.imageX}" y="${QR.imageY}" width="${QR.imageSize}" height="${QR.imageSize}" preserveAspectRatio="xMidYMid meet"/></g>`
+    : "";
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${ARTBOARD.width}" height="${ARTBOARD.height}" viewBox="0 0 ${ARTBOARD.width} ${ARTBOARD.height}">
+  <rect width="${ARTBOARD.width}" height="${ARTBOARD.height}" fill="#fbfaf6"/>
+  <g stroke="#d9d9d4" stroke-width="1" opacity="0.9">${buildGridSvgMarkup()}</g>
+  <g fill="${escapeXml(blue)}" font-family="${font}" text-anchor="start">
+    ${textMarkup}
+  </g>
+  ${qrMarkup}
+</svg>`;
+}
+
+function assert(condition, message) {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+function runSelfTests() {
+  const svg = buildStandaloneSvg(DEFAULTS, "data:image/png;base64,test");
+
+  assert(svg.includes("FOR LEASE"), "영문 헤드라인이 SVG에 포함되어야 합니다.");
+  assert(!svg.includes("englishHeadlineLine1"), "이전 영문 1행 변수명이 남아 있으면 안 됩니다.");
+  assert(!svg.includes("englishHeadlineLine2"), "이전 영문 2행 변수명이 남아 있으면 안 됩니다.");
+  assert(svg.includes(`<image href="data:image/png;base64,test"`), "QR 이미지가 SVG에 포함되어야 합니다.");
+  assert(phoneToTelUri("010-4117-6994") === "tel:+821041176994", "010 번호는 한국 국제전화 URI로 변환되어야 합니다.");
+  assert(escapeXml("A&B<>'\"") === "A&amp;B&lt;&gt;&apos;&quot;", "SVG 텍스트 특수문자가 escape 되어야 합니다.");
+  assert(POSITIONS.ctaLine.y <= GRID.y + GRID.height, "CTA 기준선은 그리드 하단을 넘으면 안 됩니다.");
+  assert(QR.boxY + QR.boxSize <= GRID.y + GRID.height, "QR 박스는 그리드 하단을 넘으면 안 됩니다.");
+  assert(QR.imageY + QR.imageSize === POSITIONS.ctaLine.y, "QR 이미지 하단은 CTA 기준선과 맞아야 합니다.");
+
+  return true;
+}
+
+if (typeof window !== "undefined") {
+  runSelfTests();
+}
+
+function downloadBlob(filename, blob) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+export default function App() {
+  const [values, setValues] = useState(DEFAULTS);
+  const [qrDataUrl, setQrDataUrl] = useState("");
+  const [scale, setScale] = useState(2);
+
+  useEffect(() => {
+    let mounted = true;
+
+    QRCode.toDataURL(phoneToTelUri(values.phoneNumber), {
+      errorCorrectionLevel: "M",
+      margin: 1,
+      width: 512,
+      color: {
+        dark: values.fontColor || DEFAULTS.fontColor,
+        light: "#fbfaf6",
+      },
+    })
+      .then((url) => {
+        if (mounted) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (mounted) setQrDataUrl("");
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [values.phoneNumber, values.fontColor]);
+
+  const svgString = useMemo(() => buildStandaloneSvg(values, qrDataUrl), [values, qrDataUrl]);
+
+  const updateField = (key, value) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const reset = () => {
+    setValues(DEFAULTS);
+  };
+
+  const exportSvg = () => {
+    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    downloadBlob("lease-poster.svg", blob);
+  };
+
+  const exportPng = () => {
+    const svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const img = new Image();
+
+    img.decoding = "async";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = ARTBOARD.width * scale;
+      canvas.height = ARTBOARD.height * scale;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+
+      ctx.fillStyle = "#fbfaf6";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      URL.revokeObjectURL(url);
+
+      canvas.toBlob((blob) => {
+        if (blob) {
+          downloadBlob(`lease-poster-${ARTBOARD.width * scale}x${ARTBOARD.height * scale}.png`, blob);
+        }
+      }, "image/png");
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+    };
+
+    img.src = url;
+  };
+
+  return (
+    <main className="min-h-screen bg-neutral-100 text-neutral-950">
+      <div className="mx-auto grid max-w-[1500px] gap-6 px-5 py-6 lg:grid-cols-[390px_1fr]">
+        <section className="rounded-3xl border border-neutral-200 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight">임대 포스터 자동 생성기</h1>
+              <p className="mt-1 text-sm leading-6 text-neutral-500">
+                변수만 입력하면 4:3 미니멀 그리드 포스터가 자동으로 갱신됩니다.
+              </p>
+            </div>
+
+            <button
+              onClick={reset}
+              className="rounded-2xl border border-neutral-200 p-2 text-neutral-600 transition hover:bg-neutral-50"
+              aria-label="기본값 복원"
+            >
+              <RefreshCw size={18} />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            {FIELD_LABELS.map(([key, label]) => (
+              <label key={key} className="block">
+                <span className="mb-1.5 block text-xs font-semibold text-neutral-500">{label}</span>
+                <input
+                  value={values[key] || ""}
+                  onChange={(e) => updateField(key, e.target.value)}
+                  className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+                />
+              </label>
+            ))}
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-neutral-500">폰트 색상</span>
+              <div className="flex gap-2">
+                <input
+                  type="color"
+                  value={values.fontColor}
+                  onChange={(e) => updateField("fontColor", e.target.value)}
+                  className="h-11 w-14 rounded-2xl border border-neutral-200 bg-white p-1"
+                />
+                <input
+                  value={values.fontColor}
+                  onChange={(e) => updateField("fontColor", e.target.value)}
+                  className="min-w-0 flex-1 rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm uppercase outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+                />
+              </div>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-neutral-500">PNG 저장 배율</span>
+              <select
+                value={scale}
+                onChange={(e) => setScale(Number(e.target.value))}
+                className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              >
+                <option value={1}>1200 × 900</option>
+                <option value={2}>2400 × 1800</option>
+                <option value={3}>3600 × 2700</option>
+                <option value={4}>4800 × 3600</option>
+              </select>
+            </label>
+
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                onClick={exportPng}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800"
+              >
+                <Download size={17} /> PNG 저장
+              </button>
+
+              <button
+                onClick={exportSvg}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+              >
+                SVG 저장
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
+            <div>
+              <h2 className="text-sm font-semibold">실시간 미리보기</h2>
+              <p className="text-xs text-neutral-500">전화번호 변경 시 우측 하단 QR도 자동 갱신됩니다.</p>
+            </div>
+            <div className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-500">
+              4:3 / 1200×900 기준
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
+            <PosterSvg values={values} qrDataUrl={qrDataUrl} />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
