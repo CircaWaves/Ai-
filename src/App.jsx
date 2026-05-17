@@ -15,7 +15,22 @@ const DEFAULTS = {
   phoneNumber: "010-4117-6994",
   ctaLine: "임대 문의 / 현장 확인 가능",
   fontColor: "#0033D9",
+  backgroundColor: "#FFFFFF",
 };
+
+const BACKGROUND_COLOR_OPTIONS = [
+  { label: "화이트", value: "#FFFFFF" },
+  { label: "웜 페이퍼", value: "#fbfaf6" },
+];
+
+const TEXT_COLOR_OPTIONS = [
+  { label: "파란색", value: "#0033D9" },
+  { label: "검정", value: "#000000" },
+  { label: "빨간색", value: "#E60012" },
+  { label: "초록색", value: "#00A651" },
+  { label: "주황색", value: "#FF6B00" },
+  { label: "보라색", value: "#6A00FF" },
+];
 
 const FIELD_LABELS = [
   ["mainHeadline", "메인 헤드라인"],
@@ -78,6 +93,10 @@ function getSafeColor(value) {
   return isValidHexColor(value) ? value : DEFAULTS.fontColor;
 }
 
+function getSafeBackgroundColor(value) {
+  return isValidHexColor(value) ? value : DEFAULTS.backgroundColor;
+}
+
 function phoneToTelUri(phone = "") {
   const digits = phone.replace(/[^0-9]/g, "");
 
@@ -129,7 +148,8 @@ function PosterText({ id, value }) {
 }
 
 function PosterSvg({ values, qrDataUrl }) {
-  const blue = getSafeColor(values.fontColor);
+  const textColor = getSafeColor(values.fontColor);
+  const backgroundColor = getSafeBackgroundColor(values.backgroundColor);
   const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
 
   return (
@@ -140,15 +160,15 @@ function PosterSvg({ values, qrDataUrl }) {
       viewBox={`0 0 ${ARTBOARD.width} ${ARTBOARD.height}`}
       role="img"
       aria-label="임대 포스터 미리보기"
-      style={{ display: "block", background: "#fbfaf6" }}
+      style={{ display: "block", background: backgroundColor }}
     >
-      <rect width={ARTBOARD.width} height={ARTBOARD.height} fill="#fbfaf6" />
+      <rect width={ARTBOARD.width} height={ARTBOARD.height} fill={backgroundColor} />
 
       <g stroke="#d9d9d4" strokeWidth="1" opacity="0.9">
         {makeGridLines()}
       </g>
 
-      <g fill={blue} fontFamily={font} textAnchor="start">
+      <g fill={textColor} fontFamily={font} textAnchor="start">
         <PosterText id="mainHeadline" value={values.mainHeadline} />
         <PosterText id="englishHeadline" value={values.englishHeadline} />
         <PosterText id="locationLine" value={values.locationLine} />
@@ -168,7 +188,7 @@ function PosterSvg({ values, qrDataUrl }) {
             y={QR.boxY}
             width={QR.boxSize}
             height={QR.boxSize}
-            fill="#fbfaf6"
+            fill={backgroundColor}
           />
           <image
             href={qrDataUrl}
@@ -215,7 +235,8 @@ function buildTextSvgMarkup(id, text) {
 }
 
 function buildStandaloneSvg(values, qrDataUrl) {
-  const blue = getSafeColor(values.fontColor);
+  const textColor = getSafeColor(values.fontColor);
+  const backgroundColor = getSafeBackgroundColor(values.backgroundColor);
   const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
 
   const textMarkup = [
@@ -233,16 +254,16 @@ function buildStandaloneSvg(values, qrDataUrl) {
 
   const qrMarkup = qrDataUrl
     ? `<g>
-        <rect x="${QR.boxX}" y="${QR.boxY}" width="${QR.boxSize}" height="${QR.boxSize}" fill="#fbfaf6"/>
+        <rect x="${QR.boxX}" y="${QR.boxY}" width="${QR.boxSize}" height="${QR.boxSize}" fill="${escapeXml(backgroundColor)}"/>
         <image href="${qrDataUrl}" x="${QR.imageX}" y="${QR.imageY}" width="${QR.imageSize}" height="${QR.imageSize}" preserveAspectRatio="xMidYMid meet"/>
       </g>`
     : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${ARTBOARD.width}" height="${ARTBOARD.height}" viewBox="0 0 ${ARTBOARD.width} ${ARTBOARD.height}">
-  <rect width="${ARTBOARD.width}" height="${ARTBOARD.height}" fill="#fbfaf6"/>
+  <rect width="${ARTBOARD.width}" height="${ARTBOARD.height}" fill="${escapeXml(backgroundColor)}"/>
   <g stroke="#d9d9d4" stroke-width="1" opacity="0.9">${buildGridSvgMarkup()}</g>
-  <g fill="${escapeXml(blue)}" font-family="${escapeXml(font)}" text-anchor="start">
+  <g fill="${escapeXml(textColor)}" font-family="${escapeXml(font)}" text-anchor="start">
     ${textMarkup}
   </g>
   ${qrMarkup}
@@ -281,6 +302,7 @@ export default function App() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const safeFontColor = getSafeColor(values.fontColor);
+  const safeBackgroundColor = getSafeBackgroundColor(values.backgroundColor);
 
   useEffect(() => {
     let mounted = true;
@@ -291,7 +313,7 @@ export default function App() {
       width: 512,
       color: {
         dark: safeFontColor,
-        light: "#fbfaf6",
+        light: safeBackgroundColor,
       },
     })
       .then((url) => {
@@ -304,7 +326,7 @@ export default function App() {
     return () => {
       mounted = false;
     };
-  }, [values.phoneNumber, safeFontColor]);
+  }, [values.phoneNumber, safeFontColor, safeBackgroundColor]);
 
   const svgString = useMemo(() => {
     return buildStandaloneSvg(values, qrDataUrl);
@@ -382,7 +404,7 @@ export default function App() {
         return;
       }
 
-      ctx.fillStyle = "#fbfaf6";
+      ctx.fillStyle = safeBackgroundColor;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
@@ -437,6 +459,7 @@ export default function App() {
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-neutral-500">
                   주소 끝에 층수를 함께 넣으면 도로명·건물번호 기준으로 문구를 채웁니다.
+                  {" "}(예시: 부산 금정구 부산대학로 33 1층)
                 </p>
               </div>
 
@@ -581,28 +604,36 @@ export default function App() {
 
             <label className="block">
               <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
-                폰트 색상
+                배경색
               </span>
-              <div className="flex gap-2">
-                <input
-                  type="color"
-                  value={safeFontColor}
-                  onChange={(e) => updateField("fontColor", e.target.value)}
-                  className="h-11 w-14 rounded-2xl border border-neutral-200 bg-white p-1"
-                />
-                <input
-                  value={values.fontColor}
-                  onChange={(e) => updateField("fontColor", e.target.value)}
-                  className="min-w-0 flex-1 rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm uppercase outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
-                  placeholder="#0033D9"
-                />
-              </div>
+              <select
+                value={safeBackgroundColor}
+                onChange={(e) => updateField("backgroundColor", e.target.value)}
+                className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              >
+                {BACKGROUND_COLOR_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label} · {option.value}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-              {!isValidHexColor(values.fontColor) ? (
-                <p className="mt-1.5 text-xs text-red-500">
-                  색상은 #0033D9처럼 6자리 HEX 코드로 입력하세요.
-                </p>
-              ) : null}
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                텍스트 색상
+              </span>
+              <select
+                value={safeFontColor}
+                onChange={(e) => updateField("fontColor", e.target.value)}
+                className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              >
+                {TEXT_COLOR_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label} · {option.value}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label className="block">
