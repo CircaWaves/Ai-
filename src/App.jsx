@@ -25,8 +25,6 @@ const FIELD_LABELS = [
   ["accessLine", "접근성 문구"],
   ["recommendedBusinessLine", "추천 업종"],
   ["leaseConditionLine", "임대 조건"],
-  ["agencyName", "부동산명"],
-  ["phoneNumber", "전화번호"],
   ["ctaLine", "CTA 문구"],
 ];
 
@@ -320,6 +318,14 @@ export default function App() {
     setLeaseInput((prev) => ({ ...prev, [key]: value }));
   };
 
+  const updateContactField = (key, value) => {
+    setLeaseInput((prev) => ({ ...prev, [key]: value }));
+    setValues((prev) => ({
+      ...prev,
+      [key === "agencyName" ? "agencyName" : "phoneNumber"]: value,
+    }));
+  };
+
   const reset = () => {
     setValues(DEFAULTS);
   };
@@ -446,6 +452,30 @@ export default function App() {
                     placeholder="부산 금정구 부산대학로 33 1층"
                   />
                 </label>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      부동산명
+                    </span>
+                    <input
+                      value={leaseInput.agencyName}
+                      onChange={(e) => updateContactField("agencyName", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      전화번호
+                    </span>
+                    <input
+                      value={leaseInput.phoneNumber}
+                      onChange={(e) => updateContactField("phoneNumber", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    />
+                  </label>
+                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <label className="block">
