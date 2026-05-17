@@ -519,8 +519,11 @@ export default function App() {
                 {analysis ? (
                   <div className="rounded-2xl bg-white px-3 py-2 text-xs leading-5 text-neutral-600">
                     <div className="font-semibold text-neutral-900">
-                      {analysis.tradeArea.areaLabel} · 중심부에서{" "}
-                      {analysis.tradeArea.distanceFromCenter}m
+                      {analysis.tradeArea.roadZone.shortLabel} · {analysis.tradeArea.floor.label}
+                    </div>
+                    <div>
+                      부산대 중심부 {analysis.tradeArea.distanceFromCenter}m · 권역 기준점{" "}
+                      {analysis.tradeArea.roadZone.distanceMeters}m
                     </div>
                     <div>
                       250m 업종:{" "}

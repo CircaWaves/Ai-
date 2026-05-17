@@ -1,6 +1,6 @@
 import { parseLeaseAnalyzeInput } from "../schemas/input.schema";
 import { geocodeAddress } from "./geocode.service";
-import { validatePnuTradeArea, extractPnuFeatures } from "./featureExtract.service";
+import { validatePnuTradeArea, extractPnuFeatures, findNearestPnuZone } from "./featureExtract.service";
 import { getNearbyMarketSnapshot } from "./marketData.service";
 import { generateLeaseCopy } from "./gptWriter.service";
 
@@ -29,7 +29,13 @@ export async function analyzeLease(body) {
   );
 
   const features = extractPnuFeatures({
+    input,
     areaLabel: areaCheck.areaLabel,
+    coordinate: {
+      lat: geo.lat,
+      lng: geo.lng,
+    },
+    zone: areaCheck.nearestZone ?? findNearestPnuZone({ lat: geo.lat, lng: geo.lng }),
     snapshots,
   });
 
@@ -48,6 +54,8 @@ export async function analyzeLease(body) {
     tradeArea: {
       name: "부산대학교 대학로 상권",
       areaLabel: areaCheck.areaLabel,
+      roadZone: features.zone,
+      floor: features.floor,
       distanceFromCenter: areaCheck.distanceFromCenter,
     },
     rawAnalysis: {

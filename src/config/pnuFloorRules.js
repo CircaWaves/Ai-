@@ -1,0 +1,98 @@
+export const PNU_FLOOR_RULES = {
+  basement: {
+    id: "basement",
+    label: "지하",
+    trafficFeatureLine: "독립공간 활용 입지",
+    accessLine: "목적방문 업종 적합",
+    recommendedBusinesses: ["주점", "연습실", "공간대여"],
+    ctaLine: "지하상가 임대문의",
+    reportFocus: "외부 노출은 약하지만 독립 공간성과 목적방문 운영에 적합합니다.",
+  },
+  first: {
+    id: "first",
+    label: "1층",
+    trafficFeatureLine: "보행 유동 노출 입지",
+    accessLine: "가시성·접근성 우수",
+    recommendedBusinesses: ["카페", "분식", "디저트"],
+    ctaLine: "1층상가 임대문의",
+    reportFocus: "보행자 노출과 접근성이 강해 즉흥 방문과 포장 수요 업종에 적합합니다.",
+  },
+  second: {
+    id: "second",
+    label: "2층",
+    trafficFeatureLine: "목적방문 수요 입지",
+    accessLine: "대학가 수요 접근",
+    recommendedBusinesses: ["스터디", "미용", "공방"],
+    ctaLine: "2층상가 임대문의",
+    reportFocus: "1층보다 노출은 낮지만 목적방문형 서비스와 대학가 수요 업종에 적합합니다.",
+  },
+  upper: {
+    id: "upper",
+    label: "3층 이상",
+    trafficFeatureLine: "공간활용 우수 입지",
+    accessLine: "예약제 업종 적합",
+    recommendedBusinesses: ["학원", "연습실", "사무실"],
+    ctaLine: "공간활용 임대문의",
+    reportFocus: "노출보다 공간 활용과 임대료 효율이 중요해 예약제·교육·업무형 업종에 적합합니다.",
+  },
+  unknown: {
+    id: "unknown",
+    label: "층수 미입력",
+    trafficFeatureLine: "",
+    accessLine: "",
+    recommendedBusinesses: [],
+    ctaLine: "",
+    reportFocus: "층수 정보가 없어 권역 특성을 우선 반영했습니다.",
+  },
+};
+
+export const PNU_ZONE_FLOOR_BUSINESS_MATRIX = {
+  pnu_station_core: {
+    basement: ["주점", "공간대여"],
+    first: ["카페", "팝업", "디저트"],
+    second: ["네일", "미용", "소형샵"],
+    upper: ["사무실", "공유오피스"],
+  },
+  main_gate: {
+    basement: ["주점", "연습실"],
+    first: ["카페", "분식", "디저트"],
+    second: ["스터디카페", "미용", "공방"],
+    upper: ["학원", "사무실", "스튜디오"],
+  },
+  youth_culture_street: {
+    basement: ["작업실", "공간대여"],
+    first: ["카페", "소품샵", "디저트"],
+    second: ["공방", "네일", "사진관"],
+    upper: ["스튜디오", "예약제 공방"],
+  },
+  main_gate_alley: {
+    basement: ["작업실", "주점"],
+    first: ["소형 카페", "서점", "소매"],
+    second: ["공방", "미용", "소형샵"],
+    upper: ["사무실", "스튜디오"],
+  },
+  north_gate_food: {
+    basement: ["주점", "연습실"],
+    first: ["백반", "분식", "덮밥"],
+    second: ["학원", "스터디", "미용"],
+    upper: ["연습실", "사무실"],
+  },
+  jangjeon_station_north: {
+    basement: ["연습실"],
+    first: ["커피", "도시락", "편의업종"],
+    second: ["학원", "스터디카페"],
+    upper: ["사무실", "공유공간"],
+  },
+  back_gate_jangjeon_ro: {
+    basement: ["연습실", "주점"],
+    first: ["커피", "간편식", "생활서비스"],
+    second: ["미용", "학원", "공방"],
+    upper: ["사무실", "작업실"],
+  },
+  campus_aux_gate: {
+    basement: ["연습실"],
+    first: ["커피", "문구", "도시락"],
+    second: ["학원", "공방"],
+    upper: ["사무실", "연구보조공간"],
+  },
+};

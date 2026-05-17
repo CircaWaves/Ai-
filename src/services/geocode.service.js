@@ -1,12 +1,22 @@
 import { PNU_TRADE_AREA } from "../config/pnuTradeArea";
+import { PNU_ROAD_ZONES } from "../config/pnuRoadZones";
 
 const KNOWN_PNU_POINTS = [
+  ...PNU_ROAD_ZONES.map((zone) => ({
+    match: [zone.shortLabel, zone.label, ...zone.keywords],
+    address: `부산광역시 금정구 장전동 ${zone.shortLabel} 인근`,
+    lat: zone.center.lat,
+    lng: zone.center.lng,
+    region3: "장전동",
+    matchedZoneId: zone.id,
+  })),
   {
     match: ["부산대역"],
     address: "부산광역시 금정구 장전동 부산대역 인근",
     lat: 35.2301,
     lng: 129.0882,
     region3: "장전동",
+    matchedZoneId: "pnu_station_core",
   },
   {
     match: ["부산대", "부산대학교", "대학로", "장전동"],
@@ -14,6 +24,7 @@ const KNOWN_PNU_POINTS = [
     lat: PNU_TRADE_AREA.center.lat,
     lng: PNU_TRADE_AREA.center.lng,
     region3: "장전동",
+    matchedZoneId: "main_gate",
   },
 ];
 
@@ -46,6 +57,7 @@ export async function geocodeAddress(address) {
     region1: "부산광역시",
     region2: "금정구",
     region3: fallback.region3,
+    matchedZoneId: fallback.matchedZoneId,
     source: "local-fallback",
   };
 }
