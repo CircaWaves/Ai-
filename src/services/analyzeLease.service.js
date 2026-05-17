@@ -1,69 +1,61 @@
 import { parseLeaseAnalyzeInput } from "../schemas/input.schema";
-import { geocodeAddress } from "./geocode.service";
-import { validatePnuTradeArea, extractPnuFeatures, findNearestPnuZone } from "./featureExtract.service";
-import { getNearbyMarketSnapshot } from "./marketData.service";
-import { generateLeaseCopy } from "./gptWriter.service";
+import { parseLeaseAddressInput } from "../utils/leaseAddressParser";
+import { PNU_FLOOR_RULES } from "../config/pnuFloorRules";
+import { detectPnuZoneByRoadInfo } from "./zoneDetect.service";
+import { generateLeaseVariablesByRule } from "./ruleWriter.service";
 
 export async function analyzeLease(body) {
   const input = parseLeaseAnalyzeInput(body);
-  const geo = await geocodeAddress(input.address);
-  const areaCheck = validatePnuTradeArea(geo.lat, geo.lng);
-
-  if (!areaCheck.isInside) {
-    return {
-      ok: false,
-      code: "OUT_OF_PNU_TRADE_AREA",
-      message: "입력한 주소가 부산대 앞 임대 게시물 자동작성 대상 범위를 벗어났습니다.",
-      distanceFromCenter: areaCheck.distanceFromCenter,
-    };
-  }
-
-  const snapshots = await Promise.all(
-    [150, 250, 350].map((radiusMeters) =>
-      getNearbyMarketSnapshot({
-        lat: geo.lat,
-        lng: geo.lng,
-        radiusMeters,
-      }),
-    ),
-  );
-
-  const features = extractPnuFeatures({
+  const rawAddressInput = buildRawAddressInput(input);
+  const parsedAddress = parseLeaseAddressInput(rawAddressInput);
+  const zone = detectPnuZoneByRoadInfo(parsedAddress);
+  const result = generateLeaseVariablesByRule({
     input,
-    areaLabel: areaCheck.areaLabel,
-    coordinate: {
-      lat: geo.lat,
-      lng: geo.lng,
-    },
-    zone: areaCheck.nearestZone ?? findNearestPnuZone({ lat: geo.lat, lng: geo.lng }),
-    snapshots,
+    parsedAddress,
+    zone,
   });
-
-  const result = await generateLeaseCopy({
-    input,
-    features,
-  });
+  const floorRule = PNU_FLOOR_RULES[parsedAddress.floorType] || PNU_FLOOR_RULES.unknown;
 
   return {
     ok: true,
-    address: geo.address,
-    coordinate: {
-      lat: geo.lat,
-      lng: geo.lng,
-    },
+    address: parsedAddress.addressOnly,
+    parsedAddress,
+    zone,
     tradeArea: {
       name: "부산대학교 대학로 상권",
-      areaLabel: areaCheck.areaLabel,
-      roadZone: features.zone,
-      floor: features.floor,
-      distanceFromCenter: areaCheck.distanceFromCenter,
+      areaLabel: zone.label,
+      roadZone: {
+        id: zone.id,
+        label: zone.label,
+        shortLabel: zone.variables.LOCATION_LINE,
+        distanceMeters: "-",
+      },
+      floor: {
+        id: floorRule.id,
+        label: floorRule.label,
+      },
+      distanceFromCenter: "-",
     },
     rawAnalysis: {
-      snapshots,
-      features,
+      snapshots: [],
+      features: {
+        zone,
+        floor: floorRule,
+        parsedAddress,
+      },
     },
     result,
   };
+}
+
+function buildRawAddressInput(input) {
+  const address = String(input.address || "").trim();
+
+  if (address.match(/\s+(지하\s*\d*층?|지하|B\s*\d+(?:F|층)?|\d+\s*(?:층|F))$/i)) {
+    return address;
+  }
+
+  return [address, input.floor].filter(Boolean).join(" ");
 }
 
 export function variablesToPosterValues(variables) {

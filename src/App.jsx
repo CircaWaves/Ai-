@@ -268,11 +268,11 @@ export default function App() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [scale, setScale] = useState(2);
   const [leaseInput, setLeaseInput] = useState({
-    address: "부산광역시 금정구 장전동 부산대 대학로",
-    floor: "1층",
+    address: "부산 금정구 부산대학로 33 1층",
+    floor: "",
     areaPyeong: 18,
-    deposit: "협의",
-    monthlyRent: "협의",
+    deposit: "",
+    monthlyRent: "",
     premium: "",
     agencyName: DEFAULTS.agencyName,
     phoneNumber: DEFAULTS.phoneNumber,
@@ -430,20 +430,20 @@ export default function App() {
                   부산대 대학로 임대 분석
                 </h2>
                 <p className="mt-1 text-xs leading-5 text-neutral-500">
-                  주소와 임대 조건을 넣으면 상권 규칙으로 포스터 문구를 채웁니다.
+                  주소 끝에 층수를 함께 넣으면 도로명·건물번호 기준으로 문구를 채웁니다.
                 </p>
               </div>
 
               <div className="space-y-3">
                 <label className="block">
                   <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
-                    주소
+                    주소 + 층수
                   </span>
                   <input
                     value={leaseInput.address}
                     onChange={(e) => updateLeaseInput("address", e.target.value)}
                     className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-                    placeholder="부산광역시 금정구 장전동 ..."
+                    placeholder="부산 금정구 부산대학로 33 1층"
                   />
                 </label>
 
@@ -456,6 +456,7 @@ export default function App() {
                       value={leaseInput.floor}
                       onChange={(e) => updateLeaseInput("floor", e.target.value)}
                       className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      placeholder="주소에 없을 때만"
                     />
                   </label>
 
@@ -522,15 +523,13 @@ export default function App() {
                       {analysis.tradeArea.roadZone.shortLabel} · {analysis.tradeArea.floor.label}
                     </div>
                     <div>
-                      부산대 중심부 {analysis.tradeArea.distanceFromCenter}m · 권역 기준점{" "}
-                      {analysis.tradeArea.roadZone.distanceMeters}m
+                      {analysis.parsedAddress.roadName || "도로명 미확인"}{" "}
+                      {analysis.parsedAddress.buildingNumber || ""} ·{" "}
+                      {analysis.parsedAddress.floorInput || "층수 미확인"}
                     </div>
                     <div>
-                      250m 업종:{" "}
-                      {analysis.rawAnalysis.snapshots
-                        .find((snapshot) => snapshot.radiusMeters === 250)
-                        ?.topCategories.map((item) => item.category)
-                        .join(", ") || "데이터 부족"}
+                      추천 업종:{" "}
+                      {analysis.result.variables.RECOMMENDED_BUSINESS_LINE.replace(" 추천", "")}
                     </div>
                   </div>
                 ) : null}
