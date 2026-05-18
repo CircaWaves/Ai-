@@ -17,8 +17,8 @@ export function generateLeaseVariablesByRule({ input, parsedAddress, zone }) {
     ACCESS_LINE: limitText(pickAccessLine({ zone, floorRule }), 28),
     RECOMMENDED_BUSINESS_LINE: limitText(`${recommendedBusinesses.join("·")} 추천`, 28),
     LEASE_CONDITION_LINE: limitText(makeLeaseConditionLine(input), 28),
-    AGENCY_NAME: input.agencyName || "원상가 지니부동산",
-    PHONE_NUMBER: input.phoneNumber || "010-4117-6994",
+    AGENCY_NAME: input.agencyName || "OO공인중개사",
+    PHONE_NUMBER: input.phoneNumber || "010-1234-5678",
     CTA_LINE: limitText(floorRule.ctaLine || zone.variables.CTA_LINE, 24),
     FONT_COLOR: "#0033D9",
   };

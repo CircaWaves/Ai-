@@ -10,9 +10,9 @@ const DEFAULTS = {
   trafficFeatureLine: "무권리 공실",
   accessLine: "부산대역 인근",
   recommendedBusinessLine: "사무실 · 소형 업무공간 추천",
-  leaseConditionLine: "보증금 1,000만원 · 월차임 70만원",
-  agencyName: "원상가 지니부동산",
-  phoneNumber: "010-4117-6994",
+  leaseConditionLine: "임대조건 협의 가능",
+  agencyName: "OO공인중개사",
+  phoneNumber: "010-1234-5678",
   ctaLine: "임대 문의 / 현장 확인 가능",
   fontColor: "#0033D9",
   backgroundColor: "#FFFFFF",
@@ -49,7 +49,7 @@ const ASPECT_RATIO_OPTIONS = [
   { id: "4:3", label: "4:3", width: 1200, height: 900 },
 ];
 
-const DEFAULT_ASPECT_RATIO = "4:3";
+const DEFAULT_ASPECT_RATIO = "1:1";
 
 const GRID = {
   x: 40,
@@ -330,14 +330,14 @@ export default function App() {
   const [scale, setScale] = useState(2);
   const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
   const [leaseInput, setLeaseInput] = useState({
-    address: "부산 금정구 부산대학로 33 1층",
+    address: "부산광역시 금정구 부산대학로64번길 12 1층",
     floor: "",
-    areaPyeong: 18,
+    areaPyeong: "18평",
     deposit: "",
     monthlyRent: "",
     premium: "",
-    agencyName: DEFAULTS.agencyName,
-    phoneNumber: DEFAULTS.phoneNumber,
+    agencyName: "OO공인중개사",
+    phoneNumber: "010-1234-5678",
     memo: "",
   });
   const [analysis, setAnalysis] = useState(null);

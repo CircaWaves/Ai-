@@ -1,6 +1,6 @@
 const DEFAULT_INPUT = {
-  agencyName: "원상가 지니부동산",
-  phoneNumber: "010-4117-6994",
+  agencyName: "OO공인중개사",
+  phoneNumber: "010-1234-5678",
 };
 
 export function parseLeaseAnalyzeInput(body) {
@@ -13,11 +13,9 @@ export function parseLeaseAnalyzeInput(body) {
     throw new Error("주소는 5자 이상 입력하세요.");
   }
 
-  if (
-    input.areaPyeong !== undefined &&
-    input.areaPyeong !== "" &&
-    Number.isNaN(Number(input.areaPyeong))
-  ) {
+  const parsedAreaPyeong = parseAreaPyeong(input.areaPyeong);
+
+  if (input.areaPyeong !== undefined && input.areaPyeong !== "" && parsedAreaPyeong === null) {
     throw new Error("면적은 숫자로 입력하세요.");
   }
 
@@ -27,6 +25,17 @@ export function parseLeaseAnalyzeInput(body) {
     areaPyeong:
       input.areaPyeong === undefined || input.areaPyeong === ""
         ? undefined
-        : Number(input.areaPyeong),
+        : parsedAreaPyeong,
   };
+}
+
+function parseAreaPyeong(value) {
+  if (value === undefined || value === "") return undefined;
+
+  if (typeof value === "number") {
+    return Number.isNaN(value) ? null : value;
+  }
+
+  const match = String(value).match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
 }

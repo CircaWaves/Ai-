@@ -25,7 +25,7 @@ function getUnknownZone() {
     variables: {
       LOCATION_LINE: "부산대 인접상권",
       TRAFFIC_FEATURE_LINE: "대학가 수요 입지",
-      ACCESS_LINE: "상권 접근성 확인 필요",
+      ACCESS_LINE: "부산대 상권 접근 우수",
       RECOMMENDED_BUSINESS_LINE: "카페·분식·서비스 추천",
       CTA_LINE: "상권분석 임대문의",
     },

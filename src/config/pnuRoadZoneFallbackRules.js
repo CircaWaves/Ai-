@@ -15,6 +15,21 @@ export const PNU_ROAD_ZONE_FALLBACK_RULES = [
     recommendedBusinesses: ["카페", "분식", "디저트", "테이크아웃"],
   },
   {
+    id: "pnu_main_gate_alley",
+    label: "부산대 정문 골목상권",
+    roadName: "부산대학로64번길",
+    minBuildingNumber: 1,
+    maxBuildingNumber: 80,
+    variables: {
+      LOCATION_LINE: "부산대 정문 골목상권",
+      TRAFFIC_FEATURE_LINE: "대학가 보행 유동 입지",
+      ACCESS_LINE: "부산대역·정문 접근 우수",
+      RECOMMENDED_BUSINESS_LINE: "카페·분식·디저트 추천",
+      CTA_LINE: "정문상권 임대문의",
+    },
+    recommendedBusinesses: ["카페", "분식", "디저트", "테이크아웃"],
+  },
+  {
     id: "pnu_station_main",
     label: "부산대역·정문 연결상권",
     roadName: "금강로",
