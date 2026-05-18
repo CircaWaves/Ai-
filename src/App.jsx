@@ -43,18 +43,22 @@ const FIELD_LABELS = [
   ["ctaLine", "CTA 문구"],
 ];
 
-const ARTBOARD = { width: 1200, height: 900 };
+const ASPECT_RATIO_OPTIONS = [
+  { id: "1:1", label: "1:1", width: 1200, height: 1200 },
+  { id: "3:4", label: "3:4", width: 900, height: 1200 },
+  { id: "4:3", label: "4:3", width: 1200, height: 900 },
+];
+
+const DEFAULT_ASPECT_RATIO = "4:3";
 
 const GRID = {
   x: 40,
   y: 36,
-  width: 1120,
-  height: 820,
   columns: 10,
   rows: 9,
 };
 
-const POSITIONS = {
+const BASE_POSITIONS = {
   mainHeadline: { x: 54, y: 176, size: 166, weight: 900, tracking: -9 },
   englishHeadline: { x: 54, y: 290, size: 84, weight: 900, tracking: -3.5 },
   locationLine: { x: 54, y: 406, size: 36, weight: 800, tracking: -1.8 },
@@ -65,15 +69,6 @@ const POSITIONS = {
   agencyName: { x: 54, y: 724, size: 46, weight: 900, tracking: -3.2 },
   phoneNumber: { x: 54, y: 790, size: 60, weight: 900, tracking: -2.2 },
   ctaLine: { x: 54, y: 852, size: 28, weight: 800, tracking: -1.3 },
-};
-
-const QR = {
-  boxX: 1026,
-  boxY: 724,
-  boxSize: 132,
-  imageX: 1030,
-  imageY: 728,
-  imageSize: 124,
 };
 
 function escapeXml(value = "") {
@@ -97,6 +92,45 @@ function getSafeBackgroundColor(value) {
   return isValidHexColor(value) ? value : DEFAULTS.backgroundColor;
 }
 
+function getArtboard(aspectRatio) {
+  return (
+    ASPECT_RATIO_OPTIONS.find((option) => option.id === aspectRatio) ||
+    ASPECT_RATIO_OPTIONS.find((option) => option.id === DEFAULT_ASPECT_RATIO)
+  );
+}
+
+function getPosterLayout(aspectRatio) {
+  const artboard = getArtboard(aspectRatio);
+  const bottomAgencyY = artboard.height - 176;
+  const qrBoxSize = 132;
+  const qrPadding = 4;
+  const rightInset = 54;
+  const positions = {
+    ...BASE_POSITIONS,
+    agencyName: { ...BASE_POSITIONS.agencyName, y: bottomAgencyY },
+    phoneNumber: { ...BASE_POSITIONS.phoneNumber, y: artboard.height - 110 },
+    ctaLine: { ...BASE_POSITIONS.ctaLine, y: artboard.height - 48 },
+  };
+
+  return {
+    artboard,
+    grid: {
+      ...GRID,
+      width: artboard.width - GRID.x * 2,
+      height: artboard.height - GRID.y - 44,
+    },
+    positions,
+    qr: {
+      boxX: artboard.width - rightInset - qrBoxSize,
+      boxY: bottomAgencyY,
+      boxSize: qrBoxSize,
+      imageX: artboard.width - rightInset - qrBoxSize + qrPadding,
+      imageY: bottomAgencyY + qrPadding,
+      imageSize: qrBoxSize - qrPadding * 2,
+    },
+  };
+}
+
 function phoneToTelUri(phone = "") {
   const digits = phone.replace(/[^0-9]/g, "");
 
@@ -107,14 +141,14 @@ function phoneToTelUri(phone = "") {
   return `tel:${digits || phone}`;
 }
 
-function makeGridLines() {
+function makeGridLines(layout) {
   const lines = [];
-  const x0 = GRID.x;
-  const y0 = GRID.y;
-  const w = GRID.width;
-  const h = GRID.height;
-  const columns = GRID.columns;
-  const rows = GRID.rows;
+  const x0 = layout.grid.x;
+  const y0 = layout.grid.y;
+  const w = layout.grid.width;
+  const h = layout.grid.height;
+  const columns = layout.grid.columns;
+  const rows = layout.grid.rows;
 
   for (let i = 0; i <= columns; i += 1) {
     const x = x0 + (w / columns) * i;
@@ -129,8 +163,8 @@ function makeGridLines() {
   return lines;
 }
 
-function PosterText({ id, value }) {
-  const p = POSITIONS[id];
+function PosterText({ id, value, positions }) {
+  const p = positions[id];
 
   if (!p) return null;
 
@@ -147,55 +181,61 @@ function PosterText({ id, value }) {
   );
 }
 
-function PosterSvg({ values, qrDataUrl }) {
+function PosterSvg({ values, qrDataUrl, aspectRatio }) {
   const textColor = getSafeColor(values.fontColor);
   const backgroundColor = getSafeBackgroundColor(values.backgroundColor);
   const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
+  const layout = getPosterLayout(aspectRatio);
+  const { artboard, positions, qr } = layout;
 
   return (
     <svg
       id="lease-poster-svg"
       xmlns="http://www.w3.org/2000/svg"
       width="100%"
-      viewBox={`0 0 ${ARTBOARD.width} ${ARTBOARD.height}`}
+      viewBox={`0 0 ${artboard.width} ${artboard.height}`}
       role="img"
       aria-label="임대 포스터 미리보기"
       style={{ display: "block", background: backgroundColor }}
     >
-      <rect width={ARTBOARD.width} height={ARTBOARD.height} fill={backgroundColor} />
+      <rect width={artboard.width} height={artboard.height} fill={backgroundColor} />
 
       <g stroke="#d9d9d4" strokeWidth="1" opacity="0.9">
-        {makeGridLines()}
+        {makeGridLines(layout)}
       </g>
 
       <g fill={textColor} fontFamily={font} textAnchor="start">
-        <PosterText id="mainHeadline" value={values.mainHeadline} />
-        <PosterText id="englishHeadline" value={values.englishHeadline} />
-        <PosterText id="locationLine" value={values.locationLine} />
-        <PosterText id="trafficFeatureLine" value={values.trafficFeatureLine} />
-        <PosterText id="accessLine" value={values.accessLine} />
-        <PosterText id="recommendedBusinessLine" value={values.recommendedBusinessLine} />
-        <PosterText id="leaseConditionLine" value={values.leaseConditionLine} />
-        <PosterText id="agencyName" value={values.agencyName} />
-        <PosterText id="phoneNumber" value={values.phoneNumber} />
-        <PosterText id="ctaLine" value={values.ctaLine} />
+        <PosterText id="mainHeadline" value={values.mainHeadline} positions={positions} />
+        <PosterText id="englishHeadline" value={values.englishHeadline} positions={positions} />
+        <PosterText id="locationLine" value={values.locationLine} positions={positions} />
+        <PosterText id="trafficFeatureLine" value={values.trafficFeatureLine} positions={positions} />
+        <PosterText id="accessLine" value={values.accessLine} positions={positions} />
+        <PosterText
+          id="recommendedBusinessLine"
+          value={values.recommendedBusinessLine}
+          positions={positions}
+        />
+        <PosterText id="leaseConditionLine" value={values.leaseConditionLine} positions={positions} />
+        <PosterText id="agencyName" value={values.agencyName} positions={positions} />
+        <PosterText id="phoneNumber" value={values.phoneNumber} positions={positions} />
+        <PosterText id="ctaLine" value={values.ctaLine} positions={positions} />
       </g>
 
       {qrDataUrl ? (
         <g>
           <rect
-            x={QR.boxX}
-            y={QR.boxY}
-            width={QR.boxSize}
-            height={QR.boxSize}
+            x={qr.boxX}
+            y={qr.boxY}
+            width={qr.boxSize}
+            height={qr.boxSize}
             fill={backgroundColor}
           />
           <image
             href={qrDataUrl}
-            x={QR.imageX}
-            y={QR.imageY}
-            width={QR.imageSize}
-            height={QR.imageSize}
+            x={qr.imageX}
+            y={qr.imageY}
+            width={qr.imageSize}
+            height={qr.imageSize}
             preserveAspectRatio="xMidYMid meet"
           />
         </g>
@@ -204,14 +244,14 @@ function PosterSvg({ values, qrDataUrl }) {
   );
 }
 
-function buildGridSvgMarkup() {
+function buildGridSvgMarkup(layout) {
   const grid = [];
-  const x0 = GRID.x;
-  const y0 = GRID.y;
-  const w = GRID.width;
-  const h = GRID.height;
-  const columns = GRID.columns;
-  const rows = GRID.rows;
+  const x0 = layout.grid.x;
+  const y0 = layout.grid.y;
+  const w = layout.grid.width;
+  const h = layout.grid.height;
+  const columns = layout.grid.columns;
+  const rows = layout.grid.rows;
 
   for (let i = 0; i <= columns; i += 1) {
     const x = x0 + (w / columns) * i;
@@ -226,43 +266,45 @@ function buildGridSvgMarkup() {
   return grid.join("");
 }
 
-function buildTextSvgMarkup(id, text) {
-  const p = POSITIONS[id];
+function buildTextSvgMarkup(id, text, positions) {
+  const p = positions[id];
 
   if (!p) return "";
 
   return `<text x="${p.x}" y="${p.y}" font-size="${p.size}" font-weight="${p.weight}" letter-spacing="${p.tracking}">${escapeXml(text)}</text>`;
 }
 
-function buildStandaloneSvg(values, qrDataUrl) {
+function buildStandaloneSvg(values, qrDataUrl, aspectRatio) {
   const textColor = getSafeColor(values.fontColor);
   const backgroundColor = getSafeBackgroundColor(values.backgroundColor);
   const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
+  const layout = getPosterLayout(aspectRatio);
+  const { artboard, positions, qr } = layout;
 
   const textMarkup = [
-    buildTextSvgMarkup("mainHeadline", values.mainHeadline),
-    buildTextSvgMarkup("englishHeadline", values.englishHeadline),
-    buildTextSvgMarkup("locationLine", values.locationLine),
-    buildTextSvgMarkup("trafficFeatureLine", values.trafficFeatureLine),
-    buildTextSvgMarkup("accessLine", values.accessLine),
-    buildTextSvgMarkup("recommendedBusinessLine", values.recommendedBusinessLine),
-    buildTextSvgMarkup("leaseConditionLine", values.leaseConditionLine),
-    buildTextSvgMarkup("agencyName", values.agencyName),
-    buildTextSvgMarkup("phoneNumber", values.phoneNumber),
-    buildTextSvgMarkup("ctaLine", values.ctaLine),
+    buildTextSvgMarkup("mainHeadline", values.mainHeadline, positions),
+    buildTextSvgMarkup("englishHeadline", values.englishHeadline, positions),
+    buildTextSvgMarkup("locationLine", values.locationLine, positions),
+    buildTextSvgMarkup("trafficFeatureLine", values.trafficFeatureLine, positions),
+    buildTextSvgMarkup("accessLine", values.accessLine, positions),
+    buildTextSvgMarkup("recommendedBusinessLine", values.recommendedBusinessLine, positions),
+    buildTextSvgMarkup("leaseConditionLine", values.leaseConditionLine, positions),
+    buildTextSvgMarkup("agencyName", values.agencyName, positions),
+    buildTextSvgMarkup("phoneNumber", values.phoneNumber, positions),
+    buildTextSvgMarkup("ctaLine", values.ctaLine, positions),
   ].join("\n    ");
 
   const qrMarkup = qrDataUrl
     ? `<g>
-        <rect x="${QR.boxX}" y="${QR.boxY}" width="${QR.boxSize}" height="${QR.boxSize}" fill="${escapeXml(backgroundColor)}"/>
-        <image href="${qrDataUrl}" x="${QR.imageX}" y="${QR.imageY}" width="${QR.imageSize}" height="${QR.imageSize}" preserveAspectRatio="xMidYMid meet"/>
+        <rect x="${qr.boxX}" y="${qr.boxY}" width="${qr.boxSize}" height="${qr.boxSize}" fill="${escapeXml(backgroundColor)}"/>
+        <image href="${qrDataUrl}" x="${qr.imageX}" y="${qr.imageY}" width="${qr.imageSize}" height="${qr.imageSize}" preserveAspectRatio="xMidYMid meet"/>
       </g>`
     : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${ARTBOARD.width}" height="${ARTBOARD.height}" viewBox="0 0 ${ARTBOARD.width} ${ARTBOARD.height}">
-  <rect width="${ARTBOARD.width}" height="${ARTBOARD.height}" fill="${escapeXml(backgroundColor)}"/>
-  <g stroke="#d9d9d4" stroke-width="1" opacity="0.9">${buildGridSvgMarkup()}</g>
+<svg xmlns="http://www.w3.org/2000/svg" width="${artboard.width}" height="${artboard.height}" viewBox="0 0 ${artboard.width} ${artboard.height}">
+  <rect width="${artboard.width}" height="${artboard.height}" fill="${escapeXml(backgroundColor)}"/>
+  <g stroke="#d9d9d4" stroke-width="1" opacity="0.9">${buildGridSvgMarkup(layout)}</g>
   <g fill="${escapeXml(textColor)}" font-family="${escapeXml(font)}" text-anchor="start">
     ${textMarkup}
   </g>
@@ -286,6 +328,7 @@ export default function App() {
   const [values, setValues] = useState(DEFAULTS);
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [scale, setScale] = useState(2);
+  const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
   const [leaseInput, setLeaseInput] = useState({
     address: "부산 금정구 부산대학로 33 1층",
     floor: "",
@@ -303,6 +346,7 @@ export default function App() {
 
   const safeFontColor = getSafeColor(values.fontColor);
   const safeBackgroundColor = getSafeBackgroundColor(values.backgroundColor);
+  const artboard = getArtboard(aspectRatio);
 
   useEffect(() => {
     let mounted = true;
@@ -329,8 +373,8 @@ export default function App() {
   }, [values.phoneNumber, safeFontColor, safeBackgroundColor]);
 
   const svgString = useMemo(() => {
-    return buildStandaloneSvg(values, qrDataUrl);
-  }, [values, qrDataUrl]);
+    return buildStandaloneSvg(values, qrDataUrl, aspectRatio);
+  }, [values, qrDataUrl, aspectRatio]);
 
   const updateField = (key, value) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -382,7 +426,7 @@ export default function App() {
 
   const exportSvg = () => {
     const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    downloadBlob("lease-poster.svg", blob);
+    downloadBlob(`lease-poster-${aspectRatio.replace(":", "x")}.svg`, blob);
   };
 
   const exportPng = () => {
@@ -394,8 +438,8 @@ export default function App() {
 
     img.onload = () => {
       const canvas = document.createElement("canvas");
-      canvas.width = ARTBOARD.width * scale;
-      canvas.height = ARTBOARD.height * scale;
+      canvas.width = artboard.width * scale;
+      canvas.height = artboard.height * scale;
 
       const ctx = canvas.getContext("2d");
 
@@ -413,7 +457,7 @@ export default function App() {
       canvas.toBlob((blob) => {
         if (blob) {
           downloadBlob(
-            `lease-poster-${ARTBOARD.width * scale}x${ARTBOARD.height * scale}.png`,
+            `lease-poster-${aspectRatio.replace(":", "x")}-${artboard.width * scale}x${artboard.height * scale}.png`,
             blob
           );
         }
@@ -437,7 +481,7 @@ export default function App() {
                 임대 포스터 자동 생성기
               </h1>
               <p className="mt-1 text-sm leading-6 text-neutral-500">
-                변수만 입력하면 4:3 미니멀 그리드 포스터가 자동으로 갱신됩니다.
+                변수만 입력하면 선택한 비율의 미니멀 그리드 포스터가 자동으로 갱신됩니다.
               </p>
             </div>
 
@@ -522,30 +566,6 @@ export default function App() {
                       onChange={(e) => updateLeaseInput("areaPyeong", e.target.value)}
                       className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
                       inputMode="decimal"
-                    />
-                  </label>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
-                      보증금
-                    </span>
-                    <input
-                      value={leaseInput.deposit}
-                      onChange={(e) => updateLeaseInput("deposit", e.target.value)}
-                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
-                    />
-                  </label>
-
-                  <label className="block">
-                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
-                      월세
-                    </span>
-                    <input
-                      value={leaseInput.monthlyRent}
-                      onChange={(e) => updateLeaseInput("monthlyRent", e.target.value)}
-                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
                     />
                   </label>
                 </div>
@@ -638,6 +658,23 @@ export default function App() {
 
             <label className="block">
               <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                포스터 비율
+              </span>
+              <select
+                value={aspectRatio}
+                onChange={(e) => setAspectRatio(e.target.value)}
+                className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              >
+                {ASPECT_RATIO_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label} · {option.width} × {option.height}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
                 PNG 저장 배율
               </span>
               <select
@@ -645,10 +682,10 @@ export default function App() {
                 onChange={(e) => setScale(Number(e.target.value))}
                 className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
               >
-                <option value={1}>1200 × 900</option>
-                <option value={2}>2400 × 1800</option>
-                <option value={3}>3600 × 2700</option>
-                <option value={4}>4800 × 3600</option>
+                <option value={1}>{artboard.width} × {artboard.height}</option>
+                <option value={2}>{artboard.width * 2} × {artboard.height * 2}</option>
+                <option value={3}>{artboard.width * 3} × {artboard.height * 3}</option>
+                <option value={4}>{artboard.width * 4} × {artboard.height * 4}</option>
               </select>
             </label>
 
@@ -682,12 +719,12 @@ export default function App() {
               </p>
             </div>
             <div className="rounded-full bg-neutral-100 px-3 py-1 text-xs font-medium text-neutral-500">
-              4:3 / 1200×900 기준
+              {aspectRatio} / {artboard.width}×{artboard.height} 기준
             </div>
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
-            <PosterSvg values={values} qrDataUrl={qrDataUrl} />
+            <PosterSvg values={values} qrDataUrl={qrDataUrl} aspectRatio={aspectRatio} />
           </div>
         </section>
       </div>
