@@ -484,7 +484,7 @@ export default function App() {
                 임대 포스터 자동 생성기
               </h1>
               <p className="mt-1 text-sm leading-6 text-neutral-500">
-                변수만 입력하면 선택한 비율의 미니멀 그리드 포스터가 자동으로 갱신됩니다.
+                변수만 입력하면 선택한 비율의 임대 포스터가 자동으로 갱신됩니다.
               </p>
             </div>
 
