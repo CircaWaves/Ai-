@@ -1,11 +1,18 @@
 import { assertLeaseOutputShape } from "../schemas/output.schema";
+import { makeLeaseCondition } from "../utils/leaseCondition";
 import { clampText } from "../utils/textLimit";
 
 const BANNED_WORDS = ["매출 보장", "고수익 보장", "무조건 성공", "월매출 확정", "권리금 보장"];
 
 export async function generateLeaseCopy({ input, features }) {
   const recommended = features.recommendedBusinesses.join("·");
-  const leaseCondition = buildLeaseConditionLine(input);
+  const condition = makeLeaseCondition({
+    input,
+    context: {
+      floorType: features.floor.id,
+      zoneId: features.zone.id,
+    },
+  });
   const copyBase = features.copyBase;
 
   const output = {
@@ -28,7 +35,7 @@ export async function generateLeaseCopy({ input, features }) {
       TRAFFIC_FEATURE_LINE: clampText(copyBase.trafficFeatureLine, 28),
       ACCESS_LINE: clampText(copyBase.accessLine, 28),
       RECOMMENDED_BUSINESS_LINE: clampText(`${recommended} 추천`, 28),
-      LEASE_CONDITION_LINE: clampText(leaseCondition, 28),
+      LEASE_CONDITION_LINE: clampText(condition.posterLine, 28),
       AGENCY_NAME: input.agencyName,
       PHONE_NUMBER: input.phoneNumber,
       CTA_LINE: clampText(copyBase.ctaLine, 24),
@@ -40,6 +47,7 @@ export async function generateLeaseCopy({ input, features }) {
         "권역 좌표, 주소 키워드, 층수 룰, 로컬 업종 스냅샷을 결합했으나 실제 매출·배달매출 데이터는 별도 연동이 필요합니다.",
     },
     warnings: ["실제 매출 보장 표현은 사용하지 않았습니다.", "배달매출은 추정 분석으로만 표현했습니다."],
+    condition,
   };
 
   validateAdCopy(output.variables);
@@ -54,15 +62,4 @@ export function validateAdCopy(variables) {
       throw new Error(`금지 표현이 포함되었습니다: ${word}`);
     }
   }
-}
-
-function buildLeaseConditionLine(input) {
-  const parts = [];
-
-  if (input.deposit) parts.push(`보증금 ${input.deposit}`);
-  if (input.monthlyRent) parts.push(`월세 ${input.monthlyRent}`);
-  if (input.floor) parts.push(input.floor);
-  if (input.areaPyeong) parts.push(`${input.areaPyeong}평`);
-
-  return parts.length ? parts.join(" · ") : "임대조건 협의 가능";
 }

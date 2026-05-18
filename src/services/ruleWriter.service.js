@@ -1,8 +1,16 @@
 import { PNU_FLOOR_RULES } from "../config/pnuFloorRules";
 import { assertLeaseOutputShape } from "../schemas/output.schema";
+import { makeLeaseCondition } from "../utils/leaseCondition";
 
 export function generateLeaseVariablesByRule({ input, parsedAddress, zone }) {
   const floorRule = PNU_FLOOR_RULES[parsedAddress.floorType] || PNU_FLOOR_RULES.unknown;
+  const condition = makeLeaseCondition({
+    input,
+    context: {
+      floorType: floorRule.id,
+      zoneId: zone.id,
+    },
+  });
   const recommendedBusinesses = pickRecommendedBusinesses({
     zone,
     floorRule,
@@ -16,7 +24,7 @@ export function generateLeaseVariablesByRule({ input, parsedAddress, zone }) {
     TRAFFIC_FEATURE_LINE: limitText(pickTrafficLine({ zone, floorRule }), 28),
     ACCESS_LINE: limitText(pickAccessLine({ zone, floorRule }), 28),
     RECOMMENDED_BUSINESS_LINE: limitText(`${recommendedBusinesses.join("·")} 추천`, 28),
-    LEASE_CONDITION_LINE: limitText(makeLeaseConditionLine(input), 28),
+    LEASE_CONDITION_LINE: limitText(condition.posterLine, 28),
     AGENCY_NAME: input.agencyName || "OO공인중개사",
     PHONE_NUMBER: input.phoneNumber || "010-1234-5678",
     CTA_LINE: limitText(floorRule.ctaLine || zone.variables.CTA_LINE, 24),
@@ -41,6 +49,7 @@ export function generateLeaseVariablesByRule({ input, parsedAddress, zone }) {
       "정확한 매출 보장 표현은 사용하지 않았습니다.",
       "층수별 추천 업종은 임대 홍보용 참고 분석입니다.",
     ],
+    condition,
   });
 }
 
@@ -77,20 +86,6 @@ function pickRecommendedBusinesses({ zone, floorRule }) {
       : [...floorBusinesses, ...zoneBusinesses];
 
   return [...new Set(merged)].slice(0, 3);
-}
-
-function makeLeaseConditionLine(input) {
-  const conditionText = [input.deposit, input.monthlyRent].filter(Boolean).join(" ");
-
-  if (conditionText.includes("협의")) {
-    return "임대조건 협의 가능";
-  }
-
-  if (input.deposit || input.monthlyRent) {
-    return "임대조건 문의 가능";
-  }
-
-  return "임대조건 협의 가능";
 }
 
 function makeReport({ parsedAddress, zone, floorRule, recommendedBusinesses }) {

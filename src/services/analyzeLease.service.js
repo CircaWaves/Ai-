@@ -44,6 +44,7 @@ export async function analyzeLease(body) {
         parsedAddress,
       },
     },
+    condition: result.condition,
     result,
   };
 }

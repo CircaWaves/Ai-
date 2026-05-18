@@ -336,6 +336,9 @@ export default function App() {
     deposit: "",
     monthlyRent: "",
     premium: "",
+    managementFee: "",
+    availableFrom: "",
+    priceDisclosure: "hidden",
     agencyName: "OO공인중개사",
     phoneNumber: "010-1234-5678",
     memo: "",
@@ -570,6 +573,87 @@ export default function App() {
                   </label>
                 </div>
 
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      보증금
+                    </span>
+                    <input
+                      value={leaseInput.deposit}
+                      onChange={(e) => updateLeaseInput("deposit", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      placeholder="1000 또는 협의"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      월세
+                    </span>
+                    <input
+                      value={leaseInput.monthlyRent}
+                      onChange={(e) => updateLeaseInput("monthlyRent", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      placeholder="80 또는 협의"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      권리금
+                    </span>
+                    <input
+                      value={leaseInput.premium}
+                      onChange={(e) => updateLeaseInput("premium", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      placeholder="없음, 무권리, 협의"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      관리비
+                    </span>
+                    <input
+                      value={leaseInput.managementFee}
+                      onChange={(e) => updateLeaseInput("managementFee", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      placeholder="10 또는 별도"
+                    />
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      입점 가능일
+                    </span>
+                    <input
+                      value={leaseInput.availableFrom}
+                      onChange={(e) => updateLeaseInput("availableFrom", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                      placeholder="즉시, 협의"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                      금액 노출
+                    </span>
+                    <select
+                      value={leaseInput.priceDisclosure}
+                      onChange={(e) => updateLeaseInput("priceDisclosure", e.target.value)}
+                      className="w-full rounded-2xl border border-blue-100 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-300 focus:ring-4 focus:ring-blue-100"
+                    >
+                      <option value="hidden">조건문의</option>
+                      <option value="public">포스터 금액 노출</option>
+                      <option value="negotiable">협의 중심</option>
+                    </select>
+                  </label>
+                </div>
+
                 <button
                   onClick={runAnalysis}
                   disabled={isAnalyzing}
@@ -603,6 +687,12 @@ export default function App() {
                     <div>
                       추천 업종:{" "}
                       {analysis.result.variables.RECOMMENDED_BUSINESS_LINE.replace(" 추천", "")}
+                    </div>
+                    <div>
+                      조건 문구: {analysis.result.condition.posterLine}
+                    </div>
+                    <div>
+                      상세 조건: {analysis.result.condition.webSummary}
                     </div>
                   </div>
                 ) : null}

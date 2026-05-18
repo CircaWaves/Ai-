@@ -1,7 +1,7 @@
 export const leaseOutputJsonSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["report", "variables", "confidence", "warnings"],
+  required: ["report", "variables", "confidence", "warnings", "condition"],
   properties: {
     report: {
       type: "object",
@@ -42,6 +42,17 @@ export const leaseOutputJsonSchema = {
     warnings: {
       type: "array",
       items: { type: "string" },
+    },
+    condition: {
+      type: "object",
+      additionalProperties: false,
+      required: ["posterLine", "webSummary", "internalNote", "disclosureLevel"],
+      properties: {
+        posterLine: { type: "string" },
+        webSummary: { type: "string" },
+        internalNote: { type: "string" },
+        disclosureLevel: { type: "string" },
+      },
     },
   },
 };
