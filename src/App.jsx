@@ -50,6 +50,22 @@ const ASPECT_RATIO_OPTIONS = [
 ];
 
 const DEFAULT_ASPECT_RATIO = "1:1";
+const DEFAULT_TEXT_LAYOUT = "centerTop";
+
+const TEXT_LAYOUT_OPTIONS = [
+  { id: "left", label: "좌측 정렬" },
+  { id: "centerTop", label: "상단 중앙 정렬" },
+];
+
+const CENTERED_TOP_TEXT_IDS = [
+  "mainHeadline",
+  "englishHeadline",
+  "locationLine",
+  "trafficFeatureLine",
+  "accessLine",
+  "recommendedBusinessLine",
+  "leaseConditionLine",
+];
 
 const GRID = {
   x: 40,
@@ -99,7 +115,7 @@ function getArtboard(aspectRatio) {
   );
 }
 
-function getPosterLayout(aspectRatio) {
+function getPosterLayout(aspectRatio, textLayout = DEFAULT_TEXT_LAYOUT) {
   const artboard = getArtboard(aspectRatio);
   const bottomAgencyY = artboard.height - 176;
   const qrBoxSize = 132;
@@ -111,6 +127,29 @@ function getPosterLayout(aspectRatio) {
     phoneNumber: { ...BASE_POSITIONS.phoneNumber, y: artboard.height - 110 },
     ctaLine: { ...BASE_POSITIONS.ctaLine, y: artboard.height - 48 },
   };
+
+  if (textLayout === "centerTop") {
+    const groupTop = Math.min(
+      ...CENTERED_TOP_TEXT_IDS.map((id) => getTextVisualTop(positions[id])),
+    );
+    const groupBottom = Math.max(
+      ...CENTERED_TOP_TEXT_IDS.map((id) => getTextVisualBottom(positions[id])),
+    );
+    const groupCenter = (groupTop + groupBottom) / 2;
+    const targetTop = GRID.y;
+    const targetBottom = bottomAgencyY - 92;
+    const targetCenter = (targetTop + targetBottom) / 2;
+    const yOffset = targetCenter - groupCenter;
+
+    for (const id of CENTERED_TOP_TEXT_IDS) {
+      positions[id] = {
+        ...positions[id],
+        x: artboard.width / 2,
+        y: positions[id].y + yOffset,
+        anchor: "middle",
+      };
+    }
+  }
 
   return {
     artboard,
@@ -129,6 +168,14 @@ function getPosterLayout(aspectRatio) {
       imageSize: qrBoxSize - qrPadding * 2,
     },
   };
+}
+
+function getTextVisualTop(position) {
+  return position.y - position.size * 0.78;
+}
+
+function getTextVisualBottom(position) {
+  return position.y + position.size * 0.22;
 }
 
 function phoneToTelUri(phone = "") {
@@ -175,17 +222,18 @@ function PosterText({ id, value, positions }) {
       fontSize={p.size}
       fontWeight={p.weight}
       letterSpacing={p.tracking}
+      textAnchor={p.anchor || "start"}
     >
       {value}
     </text>
   );
 }
 
-function PosterSvg({ values, qrDataUrl, aspectRatio }) {
+function PosterSvg({ values, qrDataUrl, aspectRatio, textLayout }) {
   const textColor = getSafeColor(values.fontColor);
   const backgroundColor = getSafeBackgroundColor(values.backgroundColor);
   const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
-  const layout = getPosterLayout(aspectRatio);
+  const layout = getPosterLayout(aspectRatio, textLayout);
   const { artboard, positions, qr } = layout;
 
   return (
@@ -204,7 +252,7 @@ function PosterSvg({ values, qrDataUrl, aspectRatio }) {
         {makeGridLines(layout)}
       </g>
 
-      <g fill={textColor} fontFamily={font} textAnchor="start">
+      <g fill={textColor} fontFamily={font}>
         <PosterText id="mainHeadline" value={values.mainHeadline} positions={positions} />
         <PosterText id="englishHeadline" value={values.englishHeadline} positions={positions} />
         <PosterText id="locationLine" value={values.locationLine} positions={positions} />
@@ -271,14 +319,14 @@ function buildTextSvgMarkup(id, text, positions) {
 
   if (!p) return "";
 
-  return `<text x="${p.x}" y="${p.y}" font-size="${p.size}" font-weight="${p.weight}" letter-spacing="${p.tracking}">${escapeXml(text)}</text>`;
+  return `<text x="${p.x}" y="${p.y}" font-size="${p.size}" font-weight="${p.weight}" letter-spacing="${p.tracking}" text-anchor="${p.anchor || "start"}">${escapeXml(text)}</text>`;
 }
 
-function buildStandaloneSvg(values, qrDataUrl, aspectRatio) {
+function buildStandaloneSvg(values, qrDataUrl, aspectRatio, textLayout) {
   const textColor = getSafeColor(values.fontColor);
   const backgroundColor = getSafeBackgroundColor(values.backgroundColor);
   const font = "Helvetica Neue, Helvetica, Arial, Noto Sans KR, Pretendard, sans-serif";
-  const layout = getPosterLayout(aspectRatio);
+  const layout = getPosterLayout(aspectRatio, textLayout);
   const { artboard, positions, qr } = layout;
 
   const textMarkup = [
@@ -305,7 +353,7 @@ function buildStandaloneSvg(values, qrDataUrl, aspectRatio) {
 <svg xmlns="http://www.w3.org/2000/svg" width="${artboard.width}" height="${artboard.height}" viewBox="0 0 ${artboard.width} ${artboard.height}">
   <rect width="${artboard.width}" height="${artboard.height}" fill="${escapeXml(backgroundColor)}"/>
   <g stroke="#d9d9d4" stroke-width="1" opacity="0.9">${buildGridSvgMarkup(layout)}</g>
-  <g fill="${escapeXml(textColor)}" font-family="${escapeXml(font)}" text-anchor="start">
+  <g fill="${escapeXml(textColor)}" font-family="${escapeXml(font)}">
     ${textMarkup}
   </g>
   ${qrMarkup}
@@ -329,6 +377,7 @@ export default function App() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [scale, setScale] = useState(2);
   const [aspectRatio, setAspectRatio] = useState(DEFAULT_ASPECT_RATIO);
+  const [textLayout, setTextLayout] = useState(DEFAULT_TEXT_LAYOUT);
   const [leaseInput, setLeaseInput] = useState({
     address: "부산광역시 금정구 부산대학로64번길 12 1층",
     floor: "",
@@ -376,8 +425,8 @@ export default function App() {
   }, [values.phoneNumber, safeFontColor, safeBackgroundColor]);
 
   const svgString = useMemo(() => {
-    return buildStandaloneSvg(values, qrDataUrl, aspectRatio);
-  }, [values, qrDataUrl, aspectRatio]);
+    return buildStandaloneSvg(values, qrDataUrl, aspectRatio, textLayout);
+  }, [values, qrDataUrl, aspectRatio, textLayout]);
 
   const updateField = (key, value) => {
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -765,6 +814,23 @@ export default function App() {
 
             <label className="block">
               <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
+                텍스트 배치
+              </span>
+              <select
+                value={textLayout}
+                onChange={(e) => setTextLayout(e.target.value)}
+                className="w-full rounded-2xl border border-neutral-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-neutral-400 focus:ring-4 focus:ring-neutral-100"
+              >
+                {TEXT_LAYOUT_OPTIONS.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="mb-1.5 block text-xs font-semibold text-neutral-500">
                 PNG 저장 배율
               </span>
               <select
@@ -814,7 +880,12 @@ export default function App() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50">
-            <PosterSvg values={values} qrDataUrl={qrDataUrl} aspectRatio={aspectRatio} />
+            <PosterSvg
+              values={values}
+              qrDataUrl={qrDataUrl}
+              aspectRatio={aspectRatio}
+              textLayout={textLayout}
+            />
           </div>
         </section>
       </div>
