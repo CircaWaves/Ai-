@@ -5,10 +5,10 @@ export const PNU_TRADE_AREA = {
     lng: 129.084,
   },
   radiusMeters: {
-    core: 150,
-    main: 250,
-    extended: 350,
-    maxAllowed: 700,
+    core: 300,
+    main: 700,
+    extended: 1100,
+    maxAllowed: 1400,
   },
   subZones: [
     {

@@ -5,7 +5,7 @@ export function parseLeaseAddressInput(rawInput) {
 
   const cleaned = rawInput.replace(/\s+/g, " ").trim();
   const floorMatch = cleaned.match(
-    /\s+(지하\s*\d*층?|지하|B\s*\d+(?:F|층)?|\d+\s*(?:층|F))$/i,
+    /\s+(반지하|옥탑|지하\s*\d*층?|지하|B\s*\d+(?:F|층)?|\d+\s*(?:층|F))$/i,
   );
   const rawFloor = floorMatch ? floorMatch[1].replace(/\s+/g, "") : "";
   const addressOnly = floorMatch ? cleaned.slice(0, floorMatch.index).trim() : cleaned;
@@ -53,18 +53,22 @@ function extractRoadInfo(address) {
 export function parseFloorType(floorInput) {
   if (!floorInput) return "unknown";
 
-  const text = String(floorInput).trim().toLowerCase();
+  const text = String(floorInput).trim().toLowerCase().replace(/\s+/g, "");
 
-  if (text.includes("지하") || text.startsWith("b")) {
+  if (text.includes("반지하")) return "basement";
+  if (text.includes("지하")) return "basement";
+  if (/^b\d*(f|층)?$/.test(text)) {
     return "basement";
   }
+
+  if (text.includes("옥탑")) return "upper";
 
   const numberMatch = text.match(/\d+/);
   const floorNumber = numberMatch ? Number(numberMatch[0]) : null;
 
   if (floorNumber === 1) return "first";
   if (floorNumber === 2) return "second";
-  if (floorNumber && floorNumber >= 3) return "upper";
+  if (floorNumber >= 3) return "upper";
 
   return "unknown";
 }

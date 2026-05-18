@@ -91,10 +91,17 @@ export function findNearestPnuZone(coordinate) {
       const withinB = b.distanceMeters <= b.zone.radiusMeters;
 
       if (withinA !== withinB) return withinA ? -1 : 1;
-      if (a.distanceMeters !== b.distanceMeters) return a.distanceMeters - b.distanceMeters;
+      const scoreA = getZoneDistanceScore(a);
+      const scoreB = getZoneDistanceScore(b);
+
+      if (scoreA !== scoreB) return scoreA - scoreB;
       return b.zone.priority - a.zone.priority;
     })
     [0];
+}
+
+function getZoneDistanceScore(candidate) {
+  return candidate.distanceMeters / candidate.zone.radiusMeters;
 }
 
 function getNearbyBusinessHints(topCategories) {

@@ -1,6 +1,17 @@
+export const PNU_ZONE_IDS = {
+  STATION_CORE: "pnu_station_core",
+  MAIN_GATE: "main_gate",
+  YOUTH_CULTURE_STREET: "youth_culture_street",
+  MAIN_GATE_ALLEY: "main_gate_alley",
+  NORTH_GATE_FOOD: "north_gate_food",
+  JANGJEON_STATION_NORTH: "jangjeon_station_north",
+  BACK_GATE_JANGJEON_RO: "back_gate_jangjeon_ro",
+  CAMPUS_AUX_GATE: "campus_aux_gate",
+};
+
 export const PNU_ROAD_ZONES = [
   {
-    id: "pnu_station_core",
+    id: PNU_ZONE_IDS.STATION_CORE,
     label: "부산대역 핵심 활성화상권",
     shortLabel: "부산대역 핵심상권",
     center: { lat: 35.2299, lng: 129.0881 },
@@ -17,7 +28,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "중",
   },
   {
-    id: "main_gate",
+    id: PNU_ZONE_IDS.MAIN_GATE,
     label: "정문 메인상권",
     shortLabel: "부산대 정문 주요상권",
     center: { lat: 35.2316, lng: 129.084 },
@@ -34,7 +45,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "중",
   },
   {
-    id: "youth_culture_street",
+    id: PNU_ZONE_IDS.YOUTH_CULTURE_STREET,
     label: "젊음의거리 문화상권",
     shortLabel: "부산대 젊음의거리",
     center: { lat: 35.2307, lng: 129.0861 },
@@ -51,7 +62,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "중",
   },
   {
-    id: "main_gate_alley",
+    id: PNU_ZONE_IDS.MAIN_GATE_ALLEY,
     label: "정문 골목형 혼합상권",
     shortLabel: "정문 골목형 상권",
     center: { lat: 35.2311, lng: 129.0851 },
@@ -68,7 +79,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "중하",
   },
   {
-    id: "north_gate_food",
+    id: PNU_ZONE_IDS.NORTH_GATE_FOOD,
     label: "북문·북맛골 식사상권",
     shortLabel: "부산대 북문 밥집상권",
     center: { lat: 35.236, lng: 129.0805 },
@@ -85,7 +96,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "높음",
   },
   {
-    id: "jangjeon_station_north",
+    id: PNU_ZONE_IDS.JANGJEON_STATION_NORTH,
     label: "장전역 북문 접근상권",
     shortLabel: "장전역 북문상권",
     center: { lat: 35.2382, lng: 129.0871 },
@@ -102,7 +113,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "중",
   },
   {
-    id: "back_gate_jangjeon_ro",
+    id: PNU_ZONE_IDS.BACK_GATE_JANGJEON_RO,
     label: "후문·장전로 생활상권",
     shortLabel: "부산대 후문 생활상권",
     center: { lat: 35.2354, lng: 129.0839 },
@@ -119,7 +130,7 @@ export const PNU_ROAD_ZONES = [
     deliveryFit: "중상",
   },
   {
-    id: "campus_aux_gate",
+    id: PNU_ZONE_IDS.CAMPUS_AUX_GATE,
     label: "문창쪽문·남문·구정문 보조 출입상권",
     shortLabel: "부산대 캠퍼스 인접",
     center: { lat: 35.2327, lng: 129.0812 },

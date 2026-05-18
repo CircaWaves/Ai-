@@ -51,7 +51,7 @@ export async function analyzeLease(body) {
 function buildRawAddressInput(input) {
   const address = String(input.address || "").trim();
 
-  if (address.match(/\s+(지하\s*\d*층?|지하|B\s*\d+(?:F|층)?|\d+\s*(?:층|F))$/i)) {
+  if (address.match(/\s+(반지하|옥탑|지하\s*\d*층?|지하|B\s*\d+(?:F|층)?|\d+\s*(?:층|F))$/i)) {
     return address;
   }
 

@@ -8,12 +8,16 @@ export function parseFloor(value) {
   const normalized = raw.toLowerCase().replace(/\s/g, "");
 
   if (
+    normalized.includes("반지하") ||
     normalized.includes("지하") ||
-    normalized.includes("b1") ||
-    normalized.includes("b층") ||
+    /^b\d*(f|층)?$/.test(normalized) ||
     normalized.includes("basement")
   ) {
     return { id: "basement", label: "지하", numeric: -1 };
+  }
+
+  if (normalized.includes("옥탑")) {
+    return { id: "upper", label: "3층 이상", numeric: null };
   }
 
   const match = normalized.match(/-?\d+/);
